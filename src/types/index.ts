@@ -24,3 +24,11 @@ export interface ApiConfiguration {
     deployment: string;
     apiVersion: string;
 }
+
+export interface RichHook {
+    title: string;
+    description: string;
+    prompt: string;
+}
+
+export type SuggestionItem = string | RichHook;
