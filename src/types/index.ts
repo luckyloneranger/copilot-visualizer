@@ -17,3 +17,10 @@ export interface Conversation {
   messages: Message[];
   updatedAt: number;
 }
+
+export interface ApiConfiguration {
+    endpoint: string;
+    apiKey: string;
+    deployment: string;
+    apiVersion: string;
+}

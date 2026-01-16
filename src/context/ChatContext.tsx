@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Message, UserPersona, Conversation } from '@/types';
+import { Message, UserPersona, Conversation, ApiConfiguration } from '@/types';
 
 interface ChatContextType {
   conversations: Conversation[];
@@ -24,6 +24,10 @@ interface ChatContextType {
   setActivePersona: (id: string) => void;
   deletePersona: (id: string) => void;
   getActivePersona: () => UserPersona | undefined;
+
+  // API Config
+  apiConfig: ApiConfiguration;
+  updateApiConfig: (config: ApiConfiguration) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -34,6 +38,14 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [suggestionsEnabled, setSuggestionsEnabled] = useState(true);
   const [inlineSuggestionsEnabled, setInlineSuggestionsEnabled] = useState(false);
   
+  // API Config
+  const [apiConfig, setApiConfig] = useState<ApiConfiguration>({
+      endpoint: '',
+      apiKey: '',
+      deployment: '',
+      apiVersion: '2024-02-15-preview'
+  });
+
   // Persona State
   const [personas, setPersonas] = useState<UserPersona[]>([
       { id: 'default', name: 'Default', role: 'General User', context: 'Standard responses.' },
@@ -49,6 +61,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     const savedInlineSuggestions = localStorage.getItem('copilot-inline-suggestions-enabled');
     const savedPersonas = localStorage.getItem('copilot-personas');
     const savedActivePersona = localStorage.getItem('copilot-active-persona');
+    const savedApiConfig = localStorage.getItem('copilot-api-config');
 
     if (saved) {
       try {
@@ -63,6 +76,13 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     if (savedInlineSuggestions !== null) setInlineSuggestionsEnabled(savedInlineSuggestions === 'true');
     if (savedPersonas) setPersonas(JSON.parse(savedPersonas));
     if (savedActivePersona) setActivePersonaId(savedActivePersona);
+    if (savedApiConfig) {
+        try {
+            setApiConfig(JSON.parse(savedApiConfig));
+        } catch (e) {
+            console.error("Failed to load api config", e);
+        }
+    }
   }, []);
 
   // Save to database
@@ -75,7 +95,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.setItem('copilot-inline-suggestions-enabled', String(inlineSuggestionsEnabled));
       localStorage.setItem('copilot-personas', JSON.stringify(personas));
       localStorage.setItem('copilot-active-persona', activePersonaId);
-  }, [suggestionsEnabled, inlineSuggestionsEnabled, personas, activePersonaId]);
+      localStorage.setItem('copilot-api-config', JSON.stringify(apiConfig));
+  }, [suggestionsEnabled, inlineSuggestionsEnabled, personas, activePersonaId, apiConfig]);
 
   const toggleSuggestions = () => {
       setSuggestionsEnabled(prev => !prev);
@@ -84,6 +105,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const toggleInlineSuggestions = () => {
       setInlineSuggestionsEnabled(prev => !prev);
   }
+
+  const updateApiConfig = (config: ApiConfiguration) => {
+      setApiConfig(config);
+  };
 
   // Persona Handlers
   const addPersona = (persona: Omit<UserPersona, 'id'>) => {
@@ -192,7 +217,9 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       addPersona,
       setActivePersona,
       deletePersona,
-      getActivePersona
+      getActivePersona,
+      apiConfig,
+      updateApiConfig
     }}>
       {children}
     </ChatContext.Provider>

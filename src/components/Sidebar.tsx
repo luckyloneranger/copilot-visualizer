@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
-import { Home, MessageSquare, Compass, FlaskConical, LayoutGrid, Plus, User, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Home, MessageSquare, Compass, FlaskConical, LayoutGrid, Plus, User, Trash2, Settings } from 'lucide-react';
 import Image from 'next/image';
 import { useChat } from '@/context/ChatContext';
+import SettingsModal from './SettingsModal';
 
 const Sidebar = () => {
   const { 
@@ -12,11 +13,13 @@ const Sidebar = () => {
       activePersonaId, personas, setActivePersona, addPersona, deletePersona 
   } = useChat();
 
-  const [showPersonas, setShowPersonas] = React.useState(false);
-  const [isAddingPersona, setIsAddingPersona] = React.useState(false);
-  const [newPersonaName, setNewPersonaName] = React.useState('');
-  const [newPersonaRole, setNewPersonaRole] = React.useState('');
-  const [newPersonaContext, setNewPersonaContext] = React.useState('');
+  const [showPersonas, setShowPersonas] = useState(false);
+  const [isAddingPersona, setIsAddingPersona] = useState(false);
+  const [newPersonaName, setNewPersonaName] = useState('');
+  const [newPersonaRole, setNewPersonaRole] = useState('');
+  const [newPersonaContext, setNewPersonaContext] = useState('');
+  
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleAddPersona = () => {
       if (!newPersonaName || !newPersonaContext) return;
@@ -198,11 +201,16 @@ const Sidebar = () => {
             </div>
         </button>
 
-        <button className="flex items-center gap-3 w-full p-2 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700">
-          <User size={20} className="text-gray-600" />
-          <span>Sign in</span>
+        <button 
+            onClick={() => setShowSettings(true)}
+            className="flex items-center gap-3 w-full p-2 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 mt-2"
+        >
+          <Settings size={20} className="text-gray-600" />
+          <span>Settings</span>
         </button>
       </div>
+
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );
 };

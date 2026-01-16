@@ -5,16 +5,16 @@ import { anchorPrompt } from './anchorPrompt';
 
 export async function POST(req: Request) {
   try {
-    const { messages, inlineSuggestionsEnabled } = await req.json();
+    const { messages, inlineSuggestionsEnabled, apiConfig } = await req.json();
 
-    const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
-    const apiKey = process.env.AZURE_OPENAI_API_KEY;
-    const deployment = process.env.AZURE_OPENAI_DEPLOYMENT;
-    const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
+    const endpoint = apiConfig?.endpoint || process.env.AZURE_OPENAI_ENDPOINT;
+    const apiKey = apiConfig?.apiKey || process.env.AZURE_OPENAI_API_KEY;
+    const deployment = apiConfig?.deployment || process.env.AZURE_OPENAI_DEPLOYMENT;
+    const apiVersion = apiConfig?.apiVersion || process.env.AZURE_OPENAI_API_VERSION;
 
     if (!endpoint || !apiKey || !deployment) {
       return NextResponse.json(
-        { error: 'Azure OpenAI environment variables are not configured.' },
+        { error: 'Azure OpenAI credentials are not configured. Please set them in the settings or environment variables.' },
         { status: 500 }
       );
     }

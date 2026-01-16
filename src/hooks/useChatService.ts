@@ -11,7 +11,8 @@ export const useChatService = () => {
         createNewChat, 
         suggestionsEnabled, 
         inlineSuggestionsEnabled, 
-        getActivePersona 
+        getActivePersona,
+        apiConfig 
     } = useChat();
 
     const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +47,8 @@ export const useChatService = () => {
                     messages: historyForApi,
                     suggestionsEnabled,
                     inlineSuggestionsEnabled,
-                    activePersona
+                    activePersona,
+                    apiConfig
                 }),
             });
 
@@ -86,7 +88,8 @@ export const useChatService = () => {
                         mainContent: mainContent,
                         suggestionsEnabled,
                         inlineSuggestionsEnabled,
-                        activePersona
+                        activePersona,
+                        apiConfig
                     })
                 });
 

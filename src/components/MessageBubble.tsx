@@ -10,8 +10,13 @@ interface MessageBubbleProps {
 
 const preprocessContent = (content: string) => {
     if (!content) return '';
+    
+    // Cleanup: Remove "Anchor:" labels and bullet points if they precede a link/anchor
+    // This fixes issues where the LLM breaks flow by listing anchors explicitly
+    let processed = content.replace(/(?:\r\n|\r|\n|^)\s*[\*\-]?\s*Anchor:\s*(?=\[)/gi, '\n');
+    
     // Hide anchor markers during streaming/before hydration
-    let processed = content.replace(/\[([^\]]*)\]\(__ANCHOR__\)/g, '$1'); 
+    processed = processed.replace(/\[([^\]]*)\]\(__ANCHOR__\)/g, '$1'); 
     
     // Fix broken suggestion links (handle nested parentheses and encoding)
     // We manually parse to handle balanced parentheses which regex struggles with

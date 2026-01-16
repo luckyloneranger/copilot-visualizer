@@ -10,13 +10,14 @@ export async function POST(req: Request) {
         suggestionsEnabled, 
         inlineSuggestionsEnabled, 
         activePersona,
-        history // Optional: conversation history if needed for context
+        history, 
+        apiConfig 
     } = await req.json();
 
-    const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
-    const apiKey = process.env.AZURE_OPENAI_API_KEY;
-    const deployment = process.env.AZURE_OPENAI_DEPLOYMENT;
-    const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
+    const endpoint = apiConfig?.endpoint || process.env.AZURE_OPENAI_ENDPOINT;
+    const apiKey = apiConfig?.apiKey || process.env.AZURE_OPENAI_API_KEY;
+    const deployment = apiConfig?.deployment || process.env.AZURE_OPENAI_DEPLOYMENT;
+    const apiVersion = apiConfig?.apiVersion || process.env.AZURE_OPENAI_API_VERSION;
 
     if (!endpoint || !apiKey || !deployment) {
       return NextResponse.json({ error: 'Config missing' }, { status: 500 });
