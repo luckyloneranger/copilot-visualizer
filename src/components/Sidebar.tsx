@@ -179,7 +179,7 @@ const Sidebar = () => {
         >
             <div className="flex items-center gap-3">
                 <span className="text-gray-600">✨</span>
-                <span>Suggestions</span>
+                <span>Suggestion Pills</span>
             </div>
             <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${suggestionsEnabled ? 'bg-blue-600' : 'bg-gray-300'}`}>
                 <div className={`w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${suggestionsEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
@@ -194,7 +194,7 @@ const Sidebar = () => {
         >
             <div className="flex items-center gap-3">
                 <span className="text-gray-600">🔗</span>
-                <span>In-text Links</span>
+                <span>Inline Suggestions</span>
             </div>
             <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${inlineSuggestionsEnabled ? 'bg-blue-600' : 'bg-gray-300'}`}>
                 <div className={`w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${inlineSuggestionsEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
