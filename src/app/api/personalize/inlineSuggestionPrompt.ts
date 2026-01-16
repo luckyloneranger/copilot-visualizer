@@ -10,6 +10,10 @@ export const inlineSuggestionPrompt = `
     -   *Context*: "OAuth 2.0 was originally created in 2012." -> *Good*: "What protocols did it replace?"
     -   *CRITICAL*: Ensure the question specifically relates to the **anchor term**. Do not ask a general question about the whole paragraph that ignores the specific anchor.
 3.  **Specific > Broad**: Avoid "Tell me more about X". Ask about specific aspects like "Pros/Cons", "Usage", "Cost", or "Implementation".
+4.  **No Redundancy**: Do NOT ask a question if the answer is already present in the source text.
+    -   *Context*: "We chose PostgreSQL for its strong ACID compliance."
+    -   *Bad*: "Why use PostgreSQL?" (Answer is already "strong ACID compliance").
+    -   *Good*: "How does it handle concurrent writes?"
 
 **Question Style Guidelines**:
 -   **Length**: STRICTLY under **8 words**. Short and punchy.
