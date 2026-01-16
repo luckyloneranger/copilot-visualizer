@@ -23,25 +23,35 @@ You will receive a summary of recent conversations, including the Chat Title and
 3. **Re-engagement Hook Strategy**:
    For the top 4 unfinished, high-value tasks:
    - **Privacy**: NEVER generate hooks for sensitive topics (Medical, Legal, PII, Self-Harm).
-   - **Content**: Reference the specific entity/goal (e.g., "Continue Paris itinerary").
-   - **Length**: Max 6 words per hook.
+   - **Title**: Short, punchy label with act as a hook to re-engage (e.g., "Continue planning your Paris Itinerary").
+   - **Description**: Brief context on where they left off (e.g., "Finding hotels in Montmartre").
+   - **Prompt**: A complete, actionable follow-up query.
    - **Tone**: Helpful, proactive, concise.
 
 # OUTPUT SCHEMA
-Output **ONLY** a valid JSON object containing a single array "hooks".
+Output **ONLY** a valid JSON object containing a single array "hooks". Each hook must have a "title", "description", and "prompt".
 
 \`\`\`json
 {
     "hooks": [
-        "Continue Paris itinerary",
-        "Refactor Python script",
-        "Compare Nike vs Adidas",
-        "Finish email draft"
+        {
+            "title": "Continue planning your Paris Trip",
+            "description": "You were looking for 4-star hotels in Montmartre.",
+            "prompt": "Show me 4-star hotels in Montmartre with good reviews"
+        },
+        {
+            "title": "Refactor Python Code",
+            "description": "You left off debugging the API route handler.",
+            "prompt": "Help me refactor the API route handler for better error handling"
+        }
     ]
 }
 \`\`\`
 
 # IMPORTANT
+- **Title**: Short, punchy (3-6 words).
+- **Description**: Contextual rationale (Why this? What was left undone?). Max 10 words.
+- **Prompt**: The actual comprehensive query to send to the AI to resume the task.
 - Prioritize diversity (don't output 4 hooks about the same topic).
 - If fewer than 4 valid hooks exist, output as many as found valid.
 - If no valid hooks exist, return an empty array.
