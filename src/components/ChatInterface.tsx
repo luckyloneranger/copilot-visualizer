@@ -5,15 +5,18 @@ import { Send, Mic, Plus as PlusIcon } from 'lucide-react';
 import { useChat } from '@/context/ChatContext';
 import { MessageBubble } from './MessageBubble';
 import { useChatService } from '@/hooks/useChatService';
+import { SuggestionsGrid } from './SuggestionsGrid';
+import { SuggestionItem } from '@/types';
+import { apiService } from '@/services/api';
 
 const ChatInterface = () => {
   const { currentMessages, contextualHookEnabled, conversations, apiConfig } = useChat();
   const { sendMessage, isLoading } = useChatService();
   const [input, setInput] = useState('');
-  const [homeSuggestions, setHomeSuggestions] = useState<any[]>([]); // simplified type for flexibility
+  const [homeSuggestions, setHomeSuggestions] = useState<SuggestionItem[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  const defaultChips = [
+  const defaultChips: string[] = [
     "Create an image",
     "Recommend a product",
     "Improve writing",
@@ -32,19 +35,8 @@ const ChatInterface = () => {
             return;
         }
 
-        try {
-            const response = await fetch('/api/conversational-journeys', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ conversations, apiConfig })
-            });
-            const data = await response.json();
-            if (data.hooks && Array.isArray(data.hooks)) {
-                setHomeSuggestions(data.hooks);
-            }
-        } catch (e) {
-            console.error("Failed to fetch contextual hooks", e);
-        }
+        const hooks = await apiService.fetchConversationalHooks(conversations, apiConfig);
+        setHomeSuggestions(hooks);
     };
 
     if (currentMessages.length === 0) {
@@ -59,7 +51,6 @@ const ChatInterface = () => {
   }, [contextualHookEnabled, currentMessages.length, conversations.length, apiConfig]);
 
   const activeChips = (contextualHookEnabled && homeSuggestions.length > 0) ? homeSuggestions : defaultChips;
-  const isRichHooks = contextualHookEnabled && homeSuggestions.length > 0 && typeof homeSuggestions[0] !== 'string';
 
   const handleSend = async (textOverride?: string) => {
     const textToSend = textOverride || input;
@@ -116,38 +107,7 @@ const ChatInterface = () => {
        {/* Input Area */}
        <div className="w-full flex flex-col items-center justify-end pb-8">
             {currentMessages.length === 0 && (
-                <div className={`grid gap-3 mb-8 max-w-4xl px-4 w-full ${isRichHooks ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2 md:grid-cols-4'}`}>
-                    {activeChips.map((chip, i) => {
-                        if (typeof chip === 'string') {
-                            return (
-                                <button 
-                                    key={i} 
-                                    onClick={() => handleSend(chip)}
-                                    className="text-sm px-4 py-3 rounded-xl border truncate transition-colors text-gray-600 bg-white border-gray-200 hover:bg-gray-50 text-left"
-                                >
-                                    {chip}
-                                </button>
-                            );
-                        } else {
-                            // Rich Hook Rendering
-                            return (
-                                <button
-                                    key={i}
-                                    onClick={() => handleSend(chip.prompt)}
-                                    className="group flex flex-col items-start gap-1 p-4 rounded-xl border border-blue-200 bg-blue-50/40 hover:bg-blue-50 text-left transition-all hover:shadow-sm"
-                                >
-                                    <div className="flex items-center text-blue-700 font-semibold text-sm">
-                                        <span className="mr-2 text-lg">✨</span>
-                                        {chip.title}
-                                    </div>
-                                    <div className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                                        {chip.description}
-                                    </div>
-                                </button>
-                            );
-                        }
-                    })}
-                </div>
+                <SuggestionsGrid items={activeChips} onSelect={handleSend} />
             )}
 
             <div className="w-full max-w-3xl px-4 relative">

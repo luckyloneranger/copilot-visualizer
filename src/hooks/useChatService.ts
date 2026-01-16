@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useChat } from '@/context/ChatContext';
 import { Message } from '@/types';
+import { apiService } from '@/services/api';
 
 export const useChatService = () => {
     const { 
@@ -40,21 +41,15 @@ export const useChatService = () => {
             const historyForApi = [...currentMessages, userMessage]; 
             const activePersona = getActivePersona();
 
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: historyForApi,
-                    suggestionsEnabled,
-                    inlineSuggestionsEnabled,
-                    activePersona,
-                    apiConfig
-                }),
-            });
+            const data = await apiService.sendChatMessage(
+                historyForApi, 
+                suggestionsEnabled, 
+                inlineSuggestionsEnabled, 
+                activePersona, 
+                apiConfig
+            );
 
-            const data = await response.json();
-
-            if (response.ok && chatId) {
+            if (data.content && chatId) {
                 const mainContent = data.content;
                 
                 addMessage(chatId, { 
@@ -81,22 +76,17 @@ export const useChatService = () => {
                 }
 
                 // Call Personalization API
-                const personalizationResponse = await fetch('/api/personalize', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        mainContent: mainContent,
+                try {
+                    const personalData = await apiService.personalizeResponse(
+                        mainContent,
                         suggestionsEnabled,
                         inlineSuggestionsEnabled,
                         activePersona,
                         apiConfig
-                    })
-                });
-
-                if (personalizationResponse.ok) {
-                    const personalData = await personalizationResponse.json();
+                    );
                     updateLastMessage(chatId, personalData.content, personalData.suggestions);
-                } else {
+                } catch (e) {
+                     // Fallback if personalization fails
                     const cleaned = mainContent.replace(/\(__ANCHOR__\)/g, '');
                     updateLastMessage(chatId, cleaned);
                 }
@@ -118,3 +108,4 @@ export const useChatService = () => {
         sendMessage
     };
 };
+
