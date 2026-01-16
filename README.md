@@ -1,8 +1,17 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Copilot Visualizer
+
+A custom chatbot application built with Next.js, TypeScript, and Tailwind CSS, designed to resemble Microsoft Copilot. It uses Azure OpenAI for the backend.
+
+## Features
+
+- **Chat Interface**: A clean, responsive UI mimicking Copilot.
+- **Sidebar Navigation**: Mock navigation for switching contexts.
+- **Azure OpenAI Integration**: Connects to your Azure OpenAI deployments for inference.
 
 ## Getting Started
 
-First, run the development server:
+1. Configure \`.env.local\` with your Azure credentials.
+2. Run the development server:
 
 ```bash
 npm run dev
