@@ -15,9 +15,6 @@ const preprocessContent = (content: string) => {
     // This fixes issues where the LLM breaks flow by listing anchors explicitly
     let processed = content.replace(/(?:\r\n|\r|\n|^)\s*[\*\-]?\s*Anchor:\s*(?=\[)/gi, '\n');
     
-    // Hide anchor markers during streaming/before hydration
-    processed = processed.replace(/\[([^\]]*)\]\(__ANCHOR__\)/g, '$1'); 
-    
     // Fix broken suggestion links (handle nested parentheses and encoding)
     // We manually parse to handle balanced parentheses which regex struggles with
     let result = '';
@@ -121,6 +118,34 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onSuggest
                                 li: ({node, ...props}) => <li className="pl-1" {...props} />,
                                 strong: ({node, ...props}) => <strong className="font-semibold text-gray-900" {...props} />,
                                 a: ({node, href, children, ...props}) => {
+                                    if (href === '__ANCHOR__') {
+                                        return (
+                                            <button 
+                                                onClick={() => {
+                                                    // Extract text content from children (handles nested strings like bold text)
+                                                    const extractText = (nodes: React.ReactNode): string => {
+                                                        if (typeof nodes === 'string') return nodes;
+                                                        if (Array.isArray(nodes)) return nodes.map(extractText).join('');
+                                                        if (React.isValidElement(nodes)) {
+                                                            const element = nodes as React.ReactElement<{ children?: React.ReactNode }>;
+                                                            if (element.props.children) {
+                                                                return extractText(element.props.children);
+                                                            }
+                                                        }
+                                                        return '';
+                                                    };
+                                                    const text = extractText(children);
+                                                    if (text) onSuggestionClick(text);
+                                                }}
+                                                className="inline-flex items-center text-purple-600 hover:text-purple-800 font-medium transition-colors border-b border-purple-300 hover:border-purple-600 border-dashed cursor-pointer"
+                                                title="Ask about this concept"
+                                            >
+                                                {children}
+                                                <span className="ml-0.5 text-[10px] text-purple-400 opacity-50">✦</span>
+                                            </button>
+                                        );
+                                    }
+
                                     if (href?.startsWith('suggestion:')) {
                                         const suggestionText = decodeURIComponent(href.replace('suggestion:', ''));
                                         return (

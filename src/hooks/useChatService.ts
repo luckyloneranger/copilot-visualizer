@@ -86,9 +86,10 @@ export const useChatService = () => {
                     );
                     updateLastMessage(chatId, personalData.content, personalData.suggestions);
                 } catch (e) {
-                     // Fallback if personalization fails
-                    const cleaned = mainContent.replace(/\(__ANCHOR__\)/g, '');
-                    updateLastMessage(chatId, cleaned);
+                     // Fallback if personalization fails: 
+                     // Keep the original anchors so they still render as clickable "Pivot Points" 
+                     // (handled by MessageBubble's __ANCHOR__ renderer)
+                    updateLastMessage(chatId, mainContent);
                 }
 
             } else {

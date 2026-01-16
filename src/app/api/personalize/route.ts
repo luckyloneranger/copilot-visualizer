@@ -77,20 +77,37 @@ export async function POST(req: Request) {
             // 1. Hydrate Inline Anchors
             if (personalizationData.anchors) {
                 // Better approach: Regex replace `\[(.*?)\]\(__ANCHOR__\)`
-                hydratedContent = hydratedContent.replace(/\[(.*?)\]\(__ANCHOR__\)/g, (match: string, term: string) => {
-                    // Try to find exact match
-                    let question = personalizationData.anchors[term];
+                hydratedContent = hydratedContent.replace(/\[(.*?)\]\(__ANCHOR__\)/g, (match: string, rawTerm: string) => {
+                    // Clean the term for lookup (remove markdown bold/italic)
+                    const cleanKey = rawTerm.replace(/[\*_`]/g, '').trim();
                     
-                    // Fallback: Try case-insensitive
+                    // Try to find exact match with cleaned key
+                    let question = personalizationData.anchors[cleanKey];
+                    // Also try with original raw term just in case
+                    if (!question) question = personalizationData.anchors[rawTerm];
+                    
+                    // Fallback: Try case-insensitive on cleaned key
                     if (!question) {
-                        const key = Object.keys(personalizationData.anchors).find((k: string) => k.toLowerCase() === term.toLowerCase());
+                        const key = Object.keys(personalizationData.anchors).find((k: string) => k.toLowerCase() === cleanKey.toLowerCase());
                         if (key) question = personalizationData.anchors[key];
                     }
 
-                    // Fallback: If still no question, revert to plain text
-                    if (!question) return term; 
+                    // Fallback: Try case-insensitive on raw term
+                    if (!question) {
+                         const key = Object.keys(personalizationData.anchors).find((k: string) => k.toLowerCase() === rawTerm.toLowerCase());
+                         if (key) question = personalizationData.anchors[key];
+                    }
 
-                    return `[${term}](suggestion:${question})`;
+                    // Fallback: If still no question, return the term (keeping formatting from regex capture if any) inside the result? 
+                    // No, if we return `rawTerm`, it replaces `[rawTerm](__ANCHOR__)` with just `rawTerm`.
+                    // The user wants it to look like an anchor if it fails? 
+                    // Wait, the client side fix I made earlier handles `href="__ANCHOR__"`! 
+                    // So if personalization FAILS for a specific term, we should probably keep it as an anchor 
+                    // But here we are returning `term` which STRIPS the anchor markdown.
+                    
+                    if (!question) return `[${rawTerm}](__ANCHOR__)`; 
+
+                    return `[${rawTerm}](suggestion:${question})`;
                 });
             } else {
                  // Cleanup if no anchors returned: remove brackets and marker
@@ -104,7 +121,8 @@ export async function POST(req: Request) {
 
         } catch (e) {
             console.error("Failed to parse personalization JSON", e);
-            hydratedContent = hydratedContent.replace(/\[([^\]]*)\]\(__ANCHOR__\)/g, '$1');
+            // In case of error, preserve the original anchors so they still render as interactive pivots
+            // do nothing, let hydratedContent stay as is (which contains anchors)
         }
     } else {
         hydratedContent = hydratedContent.replace(/\[([^\]]*)\]\(__ANCHOR__\)/g, '$1');

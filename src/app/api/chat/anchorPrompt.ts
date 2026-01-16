@@ -31,6 +31,8 @@ You are NOT generating a list. You are generating the **system/assistant respons
     -   *Correct*: ...using [React](__ANCHOR__).
     -   *Incorrect*: ...using [React.](__ANCHOR__)
 4.  **Code Blocks**: **NEVER** add anchors inside \`code blocks\` or \`\`\`code snippets\`\`\`. This breaks syntax highlighting.
+5.  **Rich Text**: You MAY anchor concepts that are **bold** or *italicized*.
+    -   *Preferred*: \`**[Key Term](__ANCHOR__)**\` (Wrap the anchor inside the formatting).
 
 **Types of "Bad" Anchors (Anti-Patterns)**:
 -   **Broad/Empty Words**: "Efficiency", "Security", "Scalability", "solutions", "approaches".
@@ -42,7 +44,9 @@ You are NOT generating a list. You are generating the **system/assistant respons
 -   **Limit**: Maximum **1-2 anchors** per paragraph. Do not clutter the text.
 -   **Lists**: For bulleted lists, you MAY include **1 anchor per list item** if it contains a key concept.
 -   **Distribution**: Spread them out. Do not put two anchors in the same sentence unless investigating a direct comparison.
--   **Last Sentence Exception**: The final sentence is special. You may identify up to 2 useful anchors in the very last sentence to provide robust next steps.
+-   **Last Sentence Exception**: The final sentence is special. It should aleast have one anchor. If you offer a choice of topics (e.g., "Would you like to learn about X, Y, or Z?"), you **MUST** anchor every distinct option offered.
+    -   **Bold + Anchor**: Use this format: \`**[Option Name](__ANCHOR__)**\`.
+    -   **CRITICAL**: Do NOT output bold text without the anchor tag in this final sentence. Every bolded option MUST be an anchor.
 
 **Example Output (Demonstrating Pivot Points)**:
 "When placing ads effectively, consider the platform's constraints. For image-first platforms, ensure the disclosure appears as [Text on the image](__ANCHOR__) rather than buried in the caption.
