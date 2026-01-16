@@ -5,10 +5,10 @@ export const inlineSuggestionPrompt = `
 
 **The "Click-Worthy" Test (Selection Criteria)**:
 1.  **Skip Trivial Anchors**: If a term is self-explanatory or generic (e.g., "email", "time", "internet"), return \`null\` or exclude it.
-2.  **Anticipate the Next Step**: What is the *immediate* next logical question a user would have?
-    - *Context*: "We used OAuth 2.0 for security."
-    - *Bad*: "What is OAuth?" (Too basic)
-    - *Good*: "How does the token flow work?" (Deep dive)
+2.  **Anticipate the Next Step (Contextual Logic)**: The question must logically flow from how the anchor is *used* in the sentence.
+    -   *Context*: "We used OAuth 2.0 to secure the API." -> *Good*: "How does the token flow work?"
+    -   *Context*: "OAuth 2.0 was originally created in 2012." -> *Good*: "What protocols did it replace?"
+    -   *CRITICAL*: Ensure the question specifically relates to the **anchor term**. Do not ask a general question about the whole paragraph that ignores the specific anchor.
 3.  **Specific > Broad**: Avoid "Tell me more about X". Ask about specific aspects like "Pros/Cons", "Usage", "Cost", or "Implementation".
 
 **Question Style Guidelines**:

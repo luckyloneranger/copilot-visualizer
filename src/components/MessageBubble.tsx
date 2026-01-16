@@ -126,11 +126,17 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onSuggest
                                         return (
                                             <button 
                                                 onClick={() => onSuggestionClick(suggestionText)}
-                                                className="inline-flex items-center text-blue-700 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded transition-colors cursor-pointer font-medium border-b border-blue-200 hover:border-blue-300"
-                                                title={`Ask: "${suggestionText}"`}
+                                                className="group relative inline-flex items-center text-blue-600 hover:text-blue-800 font-medium transition-colors"
                                             >
-                                                {children}
-                                                <span className="ml-1 text-[10px] text-blue-500">✨</span>
+                                                <span className="border-b border-blue-300 group-hover:border-blue-600 border-dashed">{children}</span>
+                                                <span className="ml-0.5 text-[10px] text-blue-400 opacity-50 group-hover:opacity-100">✨</span>
+                                                
+                                                {/* Tooltip */}
+                                                <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-max max-w-[280px] -translate-x-1/2 rounded-xl bg-[#0f172a] px-4 py-3 text-sm font-medium text-white opacity-0 shadow-2xl transition-all duration-200 group-hover:opacity-100 group-hover:-translate-y-1 z-50 text-center leading-relaxed">
+                                                    {suggestionText}
+                                                    {/* Arrow */}
+                                                    <span className="absolute left-1/2 top-full -translate-x-1/2 -mt-1.5 h-3 w-3 rotate-45 bg-[#0f172a]"></span>
+                                                </span>
                                             </button>
                                         )
                                     }
