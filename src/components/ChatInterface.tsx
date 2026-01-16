@@ -7,12 +7,13 @@ import { MessageBubble } from './MessageBubble';
 import { useChatService } from '@/hooks/useChatService';
 
 const ChatInterface = () => {
-  const { currentMessages } = useChat();
+  const { currentMessages, contextualHookEnabled, conversations, apiConfig } = useChat();
   const { sendMessage, isLoading } = useChatService();
   const [input, setInput] = useState('');
+  const [homeSuggestions, setHomeSuggestions] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  const suggestionChips = [
+  const defaultChips = [
     "Create an image",
     "Recommend a product",
     "Improve writing",
@@ -22,6 +23,36 @@ const ChatInterface = () => {
     "Write a speech",
     "Say it with care"
   ];
+
+  // Fetch contextual suggestions
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+        if (!contextualHookEnabled || conversations.length === 0) {
+            setHomeSuggestions([]);
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/conversational-journeys', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ conversations, apiConfig })
+            });
+            const data = await response.json();
+            if (data.hooks && Array.isArray(data.hooks)) {
+                setHomeSuggestions(data.hooks);
+            }
+        } catch (e) {
+            console.error("Failed to fetch contextual hooks", e);
+        }
+    };
+
+    if (currentMessages.length === 0) {
+        fetchSuggestions();
+    }
+  }, [contextualHookEnabled, currentMessages.length, conversations, apiConfig]);
+
+  const activeChips = (contextualHookEnabled && homeSuggestions.length > 0) ? homeSuggestions : defaultChips;
 
   const handleSend = async (textOverride?: string) => {
     const textToSend = textOverride || input;
@@ -79,12 +110,17 @@ const ChatInterface = () => {
        <div className="w-full flex flex-col items-center justify-end pb-8">
             {currentMessages.length === 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8 max-w-4xl px-4">
-                    {suggestionChips.map((chip, i) => (
+                    {activeChips.map((chip, i) => (
                          <button 
                             key={i} 
                             onClick={() => handleSend(chip)}
-                            className="text-sm text-gray-600 bg-white border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-50 truncate transition-colors"
+                            className={`text-sm px-4 py-2 rounded-xl border truncate transition-colors ${
+                                (contextualHookEnabled && homeSuggestions.length > 0) 
+                                ? 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100' 
+                                : 'text-gray-600 bg-white border-gray-200 hover:bg-gray-50'
+                            }`}
                         >
+                            {(contextualHookEnabled && homeSuggestions.length > 0) && <span className="mr-2">✨</span>}
                             {chip}
                         </button>
                     ))}

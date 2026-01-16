@@ -9,7 +9,7 @@ import SettingsModal from './SettingsModal';
 const Sidebar = () => {
   const { 
       conversations, currentConversationId, selectChat, createNewChat, deleteChat, 
-      suggestionsEnabled, toggleSuggestions, inlineSuggestionsEnabled, toggleInlineSuggestions,
+      suggestionsEnabled, toggleSuggestions, inlineSuggestionsEnabled, toggleInlineSuggestions, contextualHookEnabled, toggleContextualHook,
       activePersonaId, personas, setActivePersona, addPersona, deletePersona 
   } = useChat();
 
@@ -198,6 +198,21 @@ const Sidebar = () => {
             </div>
             <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${inlineSuggestionsEnabled ? 'bg-blue-600' : 'bg-gray-300'}`}>
                 <div className={`w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${inlineSuggestionsEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+            </div>
+        </button>
+
+         {/* Toggle Contextual Hook */}
+         <button 
+            onClick={toggleContextualHook}
+            className="flex items-center justify-between w-full p-2 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700"
+            title="Toggle contextual suggestions based on history"
+        >
+            <div className="flex items-center gap-3">
+                <span className="text-gray-600">🧠</span>
+                <span>Contextual Hooks</span>
+            </div>
+            <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${contextualHookEnabled ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                <div className={`w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${contextualHookEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
             </div>
         </button>
 

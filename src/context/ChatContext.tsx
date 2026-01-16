@@ -16,6 +16,8 @@ interface ChatContextType {
   toggleSuggestions: () => void;
   inlineSuggestionsEnabled: boolean;
   toggleInlineSuggestions: () => void;
+  contextualHookEnabled: boolean;
+  toggleContextualHook: () => void;
   
   // Personas
   personas: UserPersona[];
@@ -37,6 +39,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [suggestionsEnabled, setSuggestionsEnabled] = useState(true);
   const [inlineSuggestionsEnabled, setInlineSuggestionsEnabled] = useState(false);
+  const [contextualHookEnabled, setContextualHookEnabled] = useState(false);
   
   // API Config
   const [apiConfig, setApiConfig] = useState<ApiConfiguration>({
@@ -59,6 +62,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     const saved = localStorage.getItem('copilot-conversations');
     const savedSuggestions = localStorage.getItem('copilot-suggestions-enabled');
     const savedInlineSuggestions = localStorage.getItem('copilot-inline-suggestions-enabled');
+    const savedContextualHook = localStorage.getItem('copilot-contextual-hook-enabled');
     const savedPersonas = localStorage.getItem('copilot-personas');
     const savedActivePersona = localStorage.getItem('copilot-active-persona');
     const savedApiConfig = localStorage.getItem('copilot-api-config');
@@ -74,6 +78,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     
     if (savedSuggestions !== null) setSuggestionsEnabled(savedSuggestions === 'true');
     if (savedInlineSuggestions !== null) setInlineSuggestionsEnabled(savedInlineSuggestions === 'true');
+    if (savedContextualHook !== null) setContextualHookEnabled(savedContextualHook === 'true');
     if (savedPersonas) setPersonas(JSON.parse(savedPersonas));
     if (savedActivePersona) setActivePersonaId(savedActivePersona);
     if (savedApiConfig) {
@@ -93,10 +98,11 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
       localStorage.setItem('copilot-suggestions-enabled', String(suggestionsEnabled));
       localStorage.setItem('copilot-inline-suggestions-enabled', String(inlineSuggestionsEnabled));
+      localStorage.setItem('copilot-contextual-hook-enabled', String(contextualHookEnabled));
       localStorage.setItem('copilot-personas', JSON.stringify(personas));
       localStorage.setItem('copilot-active-persona', activePersonaId);
       localStorage.setItem('copilot-api-config', JSON.stringify(apiConfig));
-  }, [suggestionsEnabled, inlineSuggestionsEnabled, personas, activePersonaId, apiConfig]);
+  }, [suggestionsEnabled, inlineSuggestionsEnabled, contextualHookEnabled, personas, activePersonaId, apiConfig]);
 
   const toggleSuggestions = () => {
       setSuggestionsEnabled(prev => !prev);
@@ -104,6 +110,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const toggleInlineSuggestions = () => {
       setInlineSuggestionsEnabled(prev => !prev);
+  }
+
+  const toggleContextualHook = () => {
+      setContextualHookEnabled(prev => !prev);
   }
 
   const updateApiConfig = (config: ApiConfiguration) => {
@@ -212,6 +222,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       toggleSuggestions,
       inlineSuggestionsEnabled,
       toggleInlineSuggestions,
+      contextualHookEnabled,
+      toggleContextualHook,
       personas,
       activePersonaId,
       addPersona,
