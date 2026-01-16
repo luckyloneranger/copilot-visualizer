@@ -40,6 +40,12 @@ You have been provided with a **User Persona** above. You MUST analyze this pers
 | **Photosynthesis** | "Plants use photosynthesis to create energy." | How does it work? | What is the role of chlorophyll? |
 | **MVP** | "We need to launch an MVP soon." | define MVP. | What features belong in an MVP? |
 
+**Important Context Check**:
+Before generating a question, check: "Is this question immediately relevant to the anchor IN THIS SENTENCE?"
+- **Bad Example**: Text says "We used Fine-tuning to improve the model." -> Question: "Can fine-tuning adapt to vegan recipes?" (Too specific/unrelated).
+- **Good Example**: Text says "We used Fine-tuning to improve the model." -> Question: "How much data is needed?" (Directly relevant).
+- **Bad Example**: Text says "Azure OpenAI provides secure access." -> Question: "What is the stock price of Azure?" (Completely unrelated).
+
 **Output Instruction**: 
 Return a JSON object where keys are the exact anchor text (clean) and values are your generated questions.
 `;
