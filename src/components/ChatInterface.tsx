@@ -10,7 +10,7 @@ const ChatInterface = () => {
   const { currentMessages, contextualHookEnabled, conversations, apiConfig } = useChat();
   const { sendMessage, isLoading } = useChatService();
   const [input, setInput] = useState('');
-  const [homeSuggestions, setHomeSuggestions] = useState<string[]>([]);
+  const [homeSuggestions, setHomeSuggestions] = useState<any[]>([]); // simplified type for flexibility
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const defaultChips = [
@@ -50,9 +50,16 @@ const ChatInterface = () => {
     if (currentMessages.length === 0) {
         fetchSuggestions();
     }
-  }, [contextualHookEnabled, currentMessages.length, conversations, apiConfig]);
+    // Optimization: Only refetch when:
+    // 1. Feature is toggled (contextualHookEnabled)
+    // 2. We enter "Home" mode (currentMessages.length changes to 0)
+    // 3. A NEW conversation is added (conversations.length changes)
+    // We intentionally ignore updates to existing conversation content to reduce API calls.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contextualHookEnabled, currentMessages.length, conversations.length, apiConfig]);
 
   const activeChips = (contextualHookEnabled && homeSuggestions.length > 0) ? homeSuggestions : defaultChips;
+  const isRichHooks = contextualHookEnabled && homeSuggestions.length > 0 && typeof homeSuggestions[0] !== 'string';
 
   const handleSend = async (textOverride?: string) => {
     const textToSend = textOverride || input;
@@ -109,21 +116,37 @@ const ChatInterface = () => {
        {/* Input Area */}
        <div className="w-full flex flex-col items-center justify-end pb-8">
             {currentMessages.length === 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8 max-w-4xl px-4">
-                    {activeChips.map((chip, i) => (
-                         <button 
-                            key={i} 
-                            onClick={() => handleSend(chip)}
-                            className={`text-sm px-4 py-2 rounded-xl border truncate transition-colors ${
-                                (contextualHookEnabled && homeSuggestions.length > 0) 
-                                ? 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100' 
-                                : 'text-gray-600 bg-white border-gray-200 hover:bg-gray-50'
-                            }`}
-                        >
-                            {(contextualHookEnabled && homeSuggestions.length > 0) && <span className="mr-2">✨</span>}
-                            {chip}
-                        </button>
-                    ))}
+                <div className={`grid gap-3 mb-8 max-w-4xl px-4 w-full ${isRichHooks ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2 md:grid-cols-4'}`}>
+                    {activeChips.map((chip, i) => {
+                        if (typeof chip === 'string') {
+                            return (
+                                <button 
+                                    key={i} 
+                                    onClick={() => handleSend(chip)}
+                                    className="text-sm px-4 py-3 rounded-xl border truncate transition-colors text-gray-600 bg-white border-gray-200 hover:bg-gray-50 text-left"
+                                >
+                                    {chip}
+                                </button>
+                            );
+                        } else {
+                            // Rich Hook Rendering
+                            return (
+                                <button
+                                    key={i}
+                                    onClick={() => handleSend(chip.prompt)}
+                                    className="group flex flex-col items-start gap-1 p-4 rounded-xl border border-blue-200 bg-blue-50/40 hover:bg-blue-50 text-left transition-all hover:shadow-sm"
+                                >
+                                    <div className="flex items-center text-blue-700 font-semibold text-sm">
+                                        <span className="mr-2 text-lg">✨</span>
+                                        {chip.title}
+                                    </div>
+                                    <div className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                                        {chip.description}
+                                    </div>
+                                </button>
+                            );
+                        }
+                    })}
                 </div>
             )}
 
