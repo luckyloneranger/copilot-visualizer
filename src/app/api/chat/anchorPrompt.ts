@@ -1,59 +1,48 @@
 export const anchorPrompt = `
-**TASK: Inline Anchor Identification (Rich Text Annotation)**
+**TASK: Inline Anchor Identification (Conversation Pivot Points)**
 
-**Objective**: Enhance the user's reading experience by identifying specific "Pivot Points" in your response—concepts that are likely to spark curiosity or a desire for deeper explanation. These will become interactive tooltips.
+**Objective**: Transform standard text into an interactive learning experience by embedding "Pivot Points" that allow users to investigate concepts deeper or branch the conversation in new directions.
 
-**CRITICAL INSTRUCTION - INTEGRATION**:
-You are NOT generating a list. You are generating the **system/assistant response** with these special markers embedded directly in the text.
+**CRITICAL INSTRUCTION**:
+You are generating the standard response with markers embedded. Do NOT list anchors separately.
 
-**Selection Principles (The "Deep Dive" Test)**:
-1.  **The "Wikipedia Title" Standard**: Only select terms that would be the *title* of their own Wikipedia page or a specific section in technical documentation.
-2.  **Logical Spans & Compound Terms**:
-    -   Anchor the **full phrase** that constitutes the concept. Do not chop it up.
-    -   *Yes*: "Convolutional Neural Networks", "Text on the image", "Verbal disclosure in the episode".
-    -   *No*: "Networks", "Text", "disclosure".
-3.  **Domain Specificity**: Prioritize specific tools, protocols, named theories, or defined methodologies relevant to the topic.
-    -   *Tech*: "OAuth 2.0", "Dijkstra's Algorithm", "Kubernetes".
-    -   *Business/Legal*: "ROI", "NDA", "GDPR", "Verbal Disclosure", "Affiliate Link".
-    -   *Creative*: "Hero's Journey", "Rule of Thirds".
-    -   *Bad*: "Authentication", "Algorithm", "Containerization" (Too generic unless comparing).
-4.  **Actionable Frameworks**: Highlight techniques users can apply immediately.
-    -   *Good*: "Pomodoro Technique", "SMART Goals", "Zero Trust Architecture".
+**Selection Principles (The "Tell Me More" Test)**:
+1.  **The "Deep Dive" Standard (Specific Spans)**:
+    -   Anchor specific terms, acronyms, or named entities where a user might pause and ask "What exactly does this mean?" or "Show me an example of this."
+    -   *Examples*: "[Hydration Mismatch](__ANCHOR__)", "[Zero-Knowledge Proof](__ANCHOR__)", "[GDPR](__ANCHOR__)".
+    -   *Constraint*: Do NOT anchor generic nouns like "[Website](__ANCHOR__)" or "[Code](__ANCHOR__)" unless they are part of a specific named concept like "[Clean Code Principles](__ANCHOR__)".
 
-**Persona-Aware Anchoring**:
--   **For Beginners**: Anchor fundamental concepts (e.g., "API", "HTTP").
--   **For Experts**: informative concepts only. Skip basics. Anchor advanced nuances (e.g., "Idempotency", "Race Condition", "Asymptotic Analysis").
+2.  **The "Exploration Node" Standard (Action & Nuance)**: 
+    -   Anchor concepts that imply *complexity*, *nuance*, or *action*.
+    -   *Weak*: "[Database](__ANCHOR__)" (Static definition).
+    -   *Strong*: "[ACID Compliance](__ANCHOR__)" (Implies rules/trade-offs) or "[Sharding Strategy](__ANCHOR__)" (Implies implementation).
+
+3.  **The Forking Principle**:
+    -   If you present options or trade-offs, anchor the **opposing choices**.
+    -   *Example*: "You can choose between [Optimistic Rendering](__ANCHOR__) for speed or [Server Actions](__ANCHOR__) for simplicity."
+    -   This invites the user to click one to explore that specific path.
+
+4.  **Methodologies over Tools**:
+    -   Prioritize *patterns* and *techniques* users can apply.
+    -   *Tech*: "memoization", "debouncing", "dependency injection".
+    -   *General*: "Pareto Principle", "Sunk Cost Fallacy", "Active Listening".
 
 **Formatting Rules (STRICT)**:
-1.  **Syntax**: Wrap the selected term STRICTLY in this format: \`[Key Term](__ANCHOR__)\`.
+1.  **Syntax**: \`[Key Term](__ANCHOR__)\`
 2.  **No Text Changes**: Do NOT change the text of the term itself.
 3.  **Punctuation**: Keep punctuation *outside* the brackets.
     -   *Correct*: ...using [React](__ANCHOR__).
-    -   *Incorrect*: ...using [React.](__ANCHOR__)
-4.  **Code Blocks**: **NEVER** add anchors inside \`code blocks\` or \`\`\`code snippets\`\`\`. This breaks syntax highlighting.
-5.  **Rich Text**: You MAY anchor concepts that are **bold** or *italicized*.
-    -   *Preferred*: \`**[Key Term](__ANCHOR__)**\` (Wrap the anchor inside the formatting).
+4.  **Code Blocks**: **NEVER** add anchors inside code blocks.
+5.  **Multi-word**: Anchor the full meaningful phrase. \`[Graph RAG](__ANCHOR__)\`, not \`[Graph](__ANCHOR__) RAG\`.
 
-**Types of "Bad" Anchors (Anti-Patterns)**:
--   **Broad/Empty Words**: "Efficiency", "Security", "Scalability", "solutions", "approaches".
--   **Marketing Fluff**: "Seamless experience", "Powerful tools", "Next-gen".
--   **Verbs/Adjectives**: "optimize", "robust", "fast", "deploy".
--   **Connectors**: "However", "Therefore", "In conclusion".
+**Density & Distribution**:
+-   **Golden Rule**: 1-3 anchors per paragraph. High density is okay IF the paragraph lists distinct options.
+-   **The "Fork" Closing**: The final sentence of your response is CRITICAL. It must explicitly offer 2-3 distinct directions for the conversation to go, and EVERY option must be anchored.
+    -   *Example*: "Would you like to explore the [Security Implications](__ANCHOR__), see a [Code Example](__ANCHOR__), or discuss [Performance Costs](__ANCHOR__)?"
 
-**Density Guidelines**:
--   **Limit**: Maximum **1-2 anchors** per paragraph. Do not clutter the text.
--   **Lists**: For bulleted lists, you MAY include **1 anchor per list item** if it contains a key concept.
--   **Distribution**: Spread them out. Do not put two anchors in the same sentence unless investigating a direct comparison.
--   **Last Sentence Exception**: The final sentence is special. It should aleast have one anchor. If you offer a choice of topics (e.g., "Would you like to learn about X, Y, or Z?"), you **MUST** anchor every distinct option offered.
-    -   **Bold + Anchor**: Use this format: \`**[Option Name](__ANCHOR__)**\`.
-    -   **CRITICAL**: Do NOT output bold text without the anchor tag in this final sentence. Every bolded option MUST be an anchor.
-
-**Example Output (Demonstrating Pivot Points)**:
-"When placing ads effectively, consider the platform's constraints. For image-first platforms, ensure the disclosure appears as [Text on the image](__ANCHOR__) rather than buried in the caption.
-
-**FTC Guidelines for Social Media**:
-*   **Podcasts**: Include a [Verbal disclosure in the episode](__ANCHOR__) at the start.
-*   **Blogs**: Place the statement immediately adjacent to the [Affiliate Link](__ANCHOR__).
-
-To ensure full compliance, would you like to review the specific [Safe Harbor Provisions](__ANCHOR__) or generate a [Disclosure Template](__ANCHOR__)?"
+**Types of "Bad" Anchors (Avoid)**:
+-   **Generic Verbs**: "optimize", "ensure", "clarify".
+-   **Marketing Fluff**: "Seamless integration", "Robust solution".
+-   **Stop Words**: "However", "Therefore".
 `;
+

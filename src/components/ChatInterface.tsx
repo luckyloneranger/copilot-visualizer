@@ -14,6 +14,7 @@ const ChatInterface = () => {
   const { sendMessage, isLoading } = useChatService();
   const [input, setInput] = useState('');
   const [homeSuggestions, setHomeSuggestions] = useState<SuggestionItem[]>([]);
+  const [isHooksLoading, setIsHooksLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const defaultChips: string[] = [
@@ -35,8 +36,10 @@ const ChatInterface = () => {
             return;
         }
 
+        setIsHooksLoading(true);
         const hooks = await apiService.fetchConversationalHooks(conversations, apiConfig);
         setHomeSuggestions(hooks);
+        setIsHooksLoading(false);
     };
 
     if (currentMessages.length === 0) {
@@ -107,7 +110,11 @@ const ChatInterface = () => {
        {/* Input Area */}
        <div className="w-full flex flex-col items-center justify-end pb-8">
             {currentMessages.length === 0 && (
-                <SuggestionsGrid items={activeChips} onSelect={handleSend} />
+                <SuggestionsGrid 
+                    items={activeChips} 
+                    onSelect={handleSend} 
+                    isLoading={isHooksLoading}
+                />
             )}
 
             <div className="w-full max-w-3xl px-4 relative">

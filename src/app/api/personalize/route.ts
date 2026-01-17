@@ -6,11 +6,11 @@ import { inlineSuggestionPrompt } from './inlineSuggestionPrompt';
 export async function POST(req: Request) {
   try {
     const { 
-        mainContent, 
+        mainContent,
+        userMessage, // New field 
         suggestionsEnabled, 
         inlineSuggestionsEnabled, 
         activePersona,
-        history, 
         apiConfig 
     } = await req.json();
 
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
         const personalizationCompletion = await client.chat.completions.create({
             messages: [
                 { role: 'system', content: personalizationPrompt },
-                { role: 'user', content: `Here is the Assistant's response:\n"${mainContent}"` } 
+                { role: 'user', content: `Original User Query: "${userMessage || 'Unknown'}"\n\nAssistant's Response:\n"${mainContent}"` } 
             ],
             model: deployment,
             response_format: { type: "json_object" } 

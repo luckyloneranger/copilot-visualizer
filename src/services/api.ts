@@ -39,6 +39,7 @@ export const apiService = {
 
   async personalizeResponse(
     mainContent: string,
+    userMessage: string,
     suggestionsEnabled: boolean,
     inlineSuggestionsEnabled: boolean,
     activePersona: UserPersona | undefined,
@@ -49,6 +50,7 @@ export const apiService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             mainContent,
+            userMessage,
             suggestionsEnabled,
             inlineSuggestionsEnabled,
             activePersona,

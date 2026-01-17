@@ -79,6 +79,7 @@ export const useChatService = () => {
                 try {
                     const personalData = await apiService.personalizeResponse(
                         mainContent,
+                        text, // Pass original user query
                         suggestionsEnabled,
                         inlineSuggestionsEnabled,
                         activePersona,
@@ -86,7 +87,7 @@ export const useChatService = () => {
                     );
                     updateLastMessage(chatId, personalData.content, personalData.suggestions);
                 } catch (e) {
-                     // Fallback if personalization fails: 
+                     // Fallback if personalization fails:  
                      // Keep the original anchors so they still render as clickable "Pivot Points" 
                      // (handled by MessageBubble's __ANCHOR__ renderer)
                     updateLastMessage(chatId, mainContent);
