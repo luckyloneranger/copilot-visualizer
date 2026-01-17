@@ -43,8 +43,9 @@ export async function POST(req: Request) {
         hooks: data.hooks || []
     });
 
-  } catch (error: any) {
-    console.error('Error in contextual suggestions API:', error);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error('Error in contextual suggestions API:', error, errorMessage);
     return NextResponse.json({ hooks: [] }); // Fallback to empty on error
   }
 }

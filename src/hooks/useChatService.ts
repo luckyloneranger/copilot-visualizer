@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useChat } from '@/context/ChatContext';
 import { Message } from '@/types';
 import { apiService } from '@/services/api';
+import { STREAMING_CONSTANTS } from '@/constants';
 
 export const useChatService = () => {
     const { 
@@ -62,16 +63,16 @@ export const useChatService = () => {
 
                 // Simulate streaming
                 let currentText = '';
-                const chunkSize = 4;
+                const chunkSize = STREAMING_CONSTANTS.DEFAULT_CHUNK_SIZE;
                 
                 for (let i = 0; i < mainContent.length; i += chunkSize) {
                     const chunk = mainContent.slice(i, i + chunkSize);
                     currentText += chunk;
                     updateLastMessage(chatId, currentText);
                     
-                    let delay = 10;
-                    if (chunk.includes('.')) delay = 30;
-                    if (chunk.includes(',')) delay = 20;
+                    let delay: number = STREAMING_CONSTANTS.DEFAULT_DELAY;
+                    if (chunk.includes('.')) delay = STREAMING_CONSTANTS.PERIOD_DELAY;
+                    if (chunk.includes(',')) delay = STREAMING_CONSTANTS.COMMA_DELAY;
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
 
@@ -95,11 +96,17 @@ export const useChatService = () => {
 
             } else {
                 console.error('Error:', data.error);
-                if(chatId) addMessage(chatId, { role: 'assistant', content: "Sorry, I encountered an error." });
+                if(chatId) addMessage(chatId, { 
+                    role: 'assistant', 
+                    content: data.error ? `Error: ${data.error}` : "Sorry, I encountered an error. Please check your settings." 
+                });
             }
         } catch (error) {
             console.error('Fetch error:', error);
-            if(chatId) addMessage(chatId, { role: 'assistant', content: "Sorry, I couldn't reach the server." });
+            if(chatId) addMessage(chatId, { 
+                role: 'assistant', 
+                content: "Sorry, I couldn't reach the server. Please check your connection or settings." 
+            });
         } finally {
             setIsLoading(false);
         }

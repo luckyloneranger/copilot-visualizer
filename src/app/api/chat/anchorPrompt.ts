@@ -1,48 +1,30 @@
 export const anchorPrompt = `
-**TASK: Inline Anchor Identification (Conversation Pivot Points)**
+**TASK: Inline Anchor Identification**
+Embed "Pivot Points" into the response to enable interactive exploration.
 
-**Objective**: Transform standard text into an interactive learning experience by embedding "Pivot Points" that allow users to investigate concepts deeper or branch the conversation in new directions.
-
-**CRITICAL INSTRUCTION**:
-You are generating the standard response with markers embedded. Do NOT list anchors separately.
-
-**Selection Principles (The "Tell Me More" Test)**:
-1.  **The "Deep Dive" Standard (Specific Spans)**:
-    -   Anchor specific terms, acronyms, or named entities where a user might pause and ask "What exactly does this mean?" or "Show me an example of this."
-    -   *Examples*: "[Hydration Mismatch](__ANCHOR__)", "[Zero-Knowledge Proof](__ANCHOR__)", "[GDPR](__ANCHOR__)".
-    -   *Constraint*: Do NOT anchor generic nouns like "[Website](__ANCHOR__)" or "[Code](__ANCHOR__)" unless they are part of a specific named concept like "[Clean Code Principles](__ANCHOR__)".
-
-2.  **The "Exploration Node" Standard (Action & Nuance)**: 
-    -   Anchor concepts that imply *complexity*, *nuance*, or *action*.
-    -   *Weak*: "[Database](__ANCHOR__)" (Static definition).
-    -   *Strong*: "[ACID Compliance](__ANCHOR__)" (Implies rules/trade-offs) or "[Sharding Strategy](__ANCHOR__)" (Implies implementation).
-
-3.  **The Forking Principle**:
-    -   If you present options or trade-offs, anchor the **opposing choices**.
-    -   *Example*: "You can choose between [Optimistic Rendering](__ANCHOR__) for speed or [Server Actions](__ANCHOR__) for simplicity."
-    -   This invites the user to click one to explore that specific path.
-
-4.  **Methodologies over Tools**:
-    -   Prioritize *patterns* and *techniques* users can apply.
-    -   *Tech*: "memoization", "debouncing", "dependency injection".
-    -   *General*: "Pareto Principle", "Sunk Cost Fallacy", "Active Listening".
-
-**Formatting Rules (STRICT)**:
+**Formatting Rules (Regex Safe)**:
 1.  **Syntax**: \`[Key Term](__ANCHOR__)\`
-2.  **No Text Changes**: Do NOT change the text of the term itself.
-3.  **Punctuation**: Keep punctuation *outside* the brackets.
+2.  **Integrity**: Do NOT change the term's text. Keep punctuation *outside* the brackets.
     -   *Correct*: ...using [React](__ANCHOR__).
-4.  **Code Blocks**: **NEVER** add anchors inside code blocks.
-5.  **Multi-word**: Anchor the full meaningful phrase. \`[Graph RAG](__ANCHOR__)\`, not \`[Graph](__ANCHOR__) RAG\`.
+    -   *Incorrect*: ...using [React.](__ANCHOR__)
+3.  **Code Safety**: NEVER add anchors inside code blocks.
 
-**Density & Distribution**:
--   **Golden Rule**: 1-3 anchors per paragraph. High density is okay IF the paragraph lists distinct options.
--   **The "Fork" Closing**: The final sentence of your response is CRITICAL. It must explicitly offer 2-3 distinct directions for the conversation to go, and EVERY option must be anchored.
-    -   *Example*: "Would you like to explore the [Security Implications](__ANCHOR__), see a [Code Example](__ANCHOR__), or discuss [Performance Costs](__ANCHOR__)?"
+**Selection Guidelines**:
+1.  **The "Deep Dive" Standard**: Anchor specific entities, acronyms, or concepts where a user might want a definition or example.
+    -   *Target*: "[Zero-Knowledge Proof](__ANCHOR__)", "[GDPR](__ANCHOR__)".
+    -   *Ignore*: Generic nouns ("[Website](__ANCHOR__)") or verbs.
+2.  **The Forking Principle**: When listing trade-offs or options, anchor the distinct paths.
+    -   *Example*: "You can use [SSR](__ANCHOR__) for SEO or [CSR](__ANCHOR__) for interactivity."
 
-**Types of "Bad" Anchors (Avoid)**:
--   **Generic Verbs**: "optimize", "ensure", "clarify".
--   **Marketing Fluff**: "Seamless integration", "Robust solution".
--   **Stop Words**: "However", "Therefore".
+**Structure & Flow**:
+-   **Density**: 1-3 meaningful anchors per paragraph.
+-   **The Fork Closing**: The final sentence should explicitly offer 2-3 distinct, anchored directions for the conversation to advance.
+    -   *Good*: "Would you like to examine the [Security Risks](__ANCHOR__) or see a [Code Implementation](__ANCHOR__)?"
+    -   *Bad*: "Let me know if you need help."
+
+**Exclusion List (Strictly Avoid)**:
+-   **Generic Verbs**: "optimize", "ensure", "manage".
+-   **Marketing Fluff**: "seamless", "robust", "cutting-edge".
+-   **Connectors**: "However", "Therefore", "Additionally".
 `;
 

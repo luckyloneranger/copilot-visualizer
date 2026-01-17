@@ -97,6 +97,10 @@ const preprocessContent = (content: string) => {
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onSuggestionClick }) => {
     const isAssistant = message.role === 'assistant';
 
+    const processedContent = React.useMemo(() => 
+        isAssistant ? preprocessContent(message.content) : message.content, 
+    [isAssistant, message.content]);
+
     return (
         <div className={`flex gap-4 ${isAssistant ? '' : 'justify-end'}`}>
             {isAssistant && (
@@ -175,7 +179,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onSuggest
                                 }
                             }}
                         >
-                            {preprocessContent(message.content)}
+                            {processedContent}
                         </ReactMarkdown>
                     </div>
                 ) : (

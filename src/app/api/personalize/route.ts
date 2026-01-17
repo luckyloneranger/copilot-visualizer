@@ -133,8 +133,12 @@ export async function POST(req: Request) {
         suggestions: finalSuggestions
     });
 
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     console.error('Error in personalization API:', error);
-    return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Personalization failed', 
+      details: errorMessage 
+    }, { status: 500 });
   }
 }

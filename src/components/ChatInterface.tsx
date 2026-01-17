@@ -5,9 +5,11 @@ import { Send, Mic, Plus as PlusIcon } from 'lucide-react';
 import { useChat } from '@/context/ChatContext';
 import { MessageBubble } from './MessageBubble';
 import { useChatService } from '@/hooks/useChatService';
+import { useChatScroll } from '@/hooks/useChatScroll';
 import { SuggestionsGrid } from './SuggestionsGrid';
 import { SuggestionItem } from '@/types';
 import { apiService } from '@/services/api';
+import { DEFAULT_CHIPS } from '@/constants';
 
 const ChatInterface = () => {
   const { currentMessages, contextualHookEnabled, conversations, apiConfig } = useChat();
@@ -15,19 +17,8 @@ const ChatInterface = () => {
   const [input, setInput] = useState('');
   const [homeSuggestions, setHomeSuggestions] = useState<SuggestionItem[]>([]);
   const [isHooksLoading, setIsHooksLoading] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const isAtBottomRef = useRef(true);
-
-  const defaultChips: string[] = [
-    "Create an image",
-    "Recommend a product",
-    "Improve writing",
-    "Take a quiz",
-    "Write a first draft",
-    "Draft a text",
-    "Write a speech",
-    "Say it with care"
-  ];
+  
+  const { scrollRef, handleScroll } = useChatScroll(currentMessages, isLoading);
 
   // Fetch contextual suggestions
   useEffect(() => {
@@ -54,7 +45,7 @@ const ChatInterface = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextualHookEnabled, currentMessages.length, conversations.length, apiConfig]);
 
-  const activeChips = (contextualHookEnabled && homeSuggestions.length > 0) ? homeSuggestions : defaultChips;
+  const activeChips = (contextualHookEnabled && homeSuggestions.length > 0) ? homeSuggestions : DEFAULT_CHIPS;
 
   const handleSend = async (textOverride?: string) => {
     const textToSend = textOverride || input;
@@ -70,42 +61,6 @@ const ChatInterface = () => {
       handleSend();
     }
   };
-
-  // Scroll to bottom when loading starts and enable sticky scroll
-  useEffect(() => {
-    if (isLoading && scrollRef.current) {
-        isAtBottomRef.current = true; // Enable sticky scroll
-        scrollRef.current.scrollTo({
-            top: scrollRef.current.scrollHeight,
-            behavior: 'smooth'
-        });
-    }
-  }, [isLoading]);
-
-  // Handle scroll events to detect if user manually scrolls up
-  const handleScroll = () => {
-    if (!scrollRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-    
-    // Immediately update state - if user scrolls up even 50px, stop auto-scroll
-    if (distanceFromBottom > 50) {
-      isAtBottomRef.current = false;
-    } else if (distanceFromBottom < 10) {
-      // Re-enable if user scrolls back to very bottom
-      isAtBottomRef.current = true;
-    }
-  };
-
-  // Auto-scroll during streaming if user hasn't scrolled up
-  useEffect(() => {
-    const lastMessage = currentMessages[currentMessages.length - 1];
-    const isStreaming = lastMessage?.role === 'assistant' && !isLoading;
-    
-    if (isStreaming && isAtBottomRef.current && scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [currentMessages, isLoading]);
 
   return (
     <div className="flex-1 h-screen flex flex-col bg-[#fdfbf7] relative">

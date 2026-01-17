@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Message, UserPersona, Conversation, ApiConfiguration } from '@/types';
+import { STORAGE_CONSTANTS, DEFAULT_PERSONAS } from '@/constants';
 
 interface ChatContextType {
   conversations: Conversation[];
@@ -50,22 +51,18 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   });
 
   // Persona State
-  const [personas, setPersonas] = useState<UserPersona[]>([
-      { id: 'default', name: 'Default', role: 'General User', context: 'Standard responses.' },
-      { id: 'dev', name: 'Developer', role: 'Software Engineer', context: 'Prefer technical, code-heavy, and concise responses.' },
-      { id: 'creative', name: 'Creative', role: 'Writer', context: 'Use vivid language, metaphors, and elaborated explanations.' }
-  ]);
+  const [personas, setPersonas] = useState<UserPersona[]>([...DEFAULT_PERSONAS]);
   const [activePersonaId, setActivePersonaId] = useState<string>('default');
 
   // Load from database (localStorage for now)
   useEffect(() => {
-    const saved = localStorage.getItem('copilot-conversations');
-    const savedSuggestions = localStorage.getItem('copilot-suggestions-enabled');
-    const savedInlineSuggestions = localStorage.getItem('copilot-inline-suggestions-enabled');
-    const savedContextualHook = localStorage.getItem('copilot-contextual-hook-enabled');
-    const savedPersonas = localStorage.getItem('copilot-personas');
-    const savedActivePersona = localStorage.getItem('copilot-active-persona');
-    const savedApiConfig = localStorage.getItem('copilot-api-config');
+    const saved = localStorage.getItem(STORAGE_CONSTANTS.KEYS.CONVERSATIONS);
+    const savedSuggestions = localStorage.getItem(STORAGE_CONSTANTS.KEYS.SUGGESTIONS_ENABLED);
+    const savedInlineSuggestions = localStorage.getItem(STORAGE_CONSTANTS.KEYS.INLINE_SUGGESTIONS_ENABLED);
+    const savedContextualHook = localStorage.getItem(STORAGE_CONSTANTS.KEYS.CONTEXTUAL_HOOK_ENABLED);
+    const savedPersonas = localStorage.getItem(STORAGE_CONSTANTS.KEYS.PERSONAS);
+    const savedActivePersona = localStorage.getItem(STORAGE_CONSTANTS.KEYS.ACTIVE_PERSONA);
+    const savedApiConfig = localStorage.getItem(STORAGE_CONSTANTS.KEYS.API_CONFIG);
 
     if (saved) {
       try {
@@ -92,16 +89,22 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Save to database
   useEffect(() => {
-    if (conversations.length > 0) localStorage.setItem('copilot-conversations', JSON.stringify(conversations));
+    const timeoutId = setTimeout(() => {
+        if (conversations.length > 0) {
+            localStorage.setItem(STORAGE_CONSTANTS.KEYS.CONVERSATIONS, JSON.stringify(conversations));
+        }
+    }, STORAGE_CONSTANTS.DEBOUNCE_DELAY);
+
+    return () => clearTimeout(timeoutId);
   }, [conversations]);
   
   useEffect(() => {
-      localStorage.setItem('copilot-suggestions-enabled', String(suggestionsEnabled));
-      localStorage.setItem('copilot-inline-suggestions-enabled', String(inlineSuggestionsEnabled));
-      localStorage.setItem('copilot-contextual-hook-enabled', String(contextualHookEnabled));
-      localStorage.setItem('copilot-personas', JSON.stringify(personas));
-      localStorage.setItem('copilot-active-persona', activePersonaId);
-      localStorage.setItem('copilot-api-config', JSON.stringify(apiConfig));
+      localStorage.setItem(STORAGE_CONSTANTS.KEYS.SUGGESTIONS_ENABLED, String(suggestionsEnabled));
+      localStorage.setItem(STORAGE_CONSTANTS.KEYS.INLINE_SUGGESTIONS_ENABLED, String(inlineSuggestionsEnabled));
+      localStorage.setItem(STORAGE_CONSTANTS.KEYS.CONTEXTUAL_HOOK_ENABLED, String(contextualHookEnabled));
+      localStorage.setItem(STORAGE_CONSTANTS.KEYS.PERSONAS, JSON.stringify(personas));
+      localStorage.setItem(STORAGE_CONSTANTS.KEYS.ACTIVE_PERSONA, activePersonaId);
+      localStorage.setItem(STORAGE_CONSTANTS.KEYS.API_CONFIG, JSON.stringify(apiConfig));
   }, [suggestionsEnabled, inlineSuggestionsEnabled, contextualHookEnabled, personas, activePersonaId, apiConfig]);
 
   const toggleSuggestions = () => {
@@ -166,24 +169,35 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const addMessage = (conversationId: string, message: Message) => {
-    setConversations(prev => prev.map(c => {
-      if (c.id === conversationId) {
-        const updatedMessages = [...c.messages, message];
-        // Auto-generate title if it's the first user message
-        let newTitle = c.title;
-        if (c.messages.length === 0 && message.role === 'user') {
-            newTitle = message.content.slice(0, 30) + (message.content.length > 30 ? '...' : '');
+    setConversations(prev => {
+      const updated = prev.map(c => {
+        if (c.id === conversationId) {
+          const updatedMessages = [...c.messages, message];
+          // Auto-generate title if it's the first user message
+          let newTitle = c.title;
+          if (c.messages.length === 0 && message.role === 'user') {
+              newTitle = message.content.slice(0, 30) + (message.content.length > 30 ? '...' : '');
+          }
+          
+          return {
+            ...c,
+            messages: updatedMessages,
+            title: newTitle,
+            updatedAt: Date.now()
+          };
         }
-        
-        return {
-          ...c,
-          messages: updatedMessages,
-          title: newTitle,
-          updatedAt: Date.now()
-        };
+        return c;
+      });
+      
+      // Only sort if the active conversation changed (to move it to top)
+      const activeConvIdx = updated.findIndex(c => c.id === conversationId);
+      if (activeConvIdx > 0) {
+        const [activeConv] = updated.splice(activeConvIdx, 1);
+        updated.unshift(activeConv);
       }
-      return c;
-    }).sort((a, b) => b.updatedAt - a.updatedAt)); // Move active chat to top
+      
+      return updated;
+    });
   };
 
   const updateLastMessage = (conversationId: string, content: string, suggestions?: string[]) => {

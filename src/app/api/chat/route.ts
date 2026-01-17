@@ -51,10 +51,11 @@ export async function POST(req: Request) {
       role: 'assistant',
       content: mainContent,
     });
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     console.error('Error in chat API:', error);
     return NextResponse.json(
-      { error: 'Failed to process chat request.', details: error.message },
+      { error: 'Failed to process chat request.', details: errorMessage },
       { status: 500 }
     );
   }
