@@ -16,7 +16,8 @@ const ChatInterface = () => {
   const [homeSuggestions, setHomeSuggestions] = useState<SuggestionItem[]>([]);
   const [isHooksLoading, setIsHooksLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  
+  const isAtBottomRef = useRef(true);
+
   const defaultChips: string[] = [
     "Create an image",
     "Recommend a product",
@@ -70,16 +71,50 @@ const ChatInterface = () => {
     }
   };
 
+  // Scroll to bottom when loading starts and enable sticky scroll
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (isLoading && scrollRef.current) {
+        isAtBottomRef.current = true; // Enable sticky scroll
+        scrollRef.current.scrollTo({
+            top: scrollRef.current.scrollHeight,
+            behavior: 'smooth'
+        });
     }
-  }, [currentMessages, isLoading]); // Scroll on new messages
+  }, [isLoading]);
+
+  // Handle scroll events to detect if user manually scrolls up
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    
+    // Immediately update state - if user scrolls up even 50px, stop auto-scroll
+    if (distanceFromBottom > 50) {
+      isAtBottomRef.current = false;
+    } else if (distanceFromBottom < 10) {
+      // Re-enable if user scrolls back to very bottom
+      isAtBottomRef.current = true;
+    }
+  };
+
+  // Auto-scroll during streaming if user hasn't scrolled up
+  useEffect(() => {
+    const lastMessage = currentMessages[currentMessages.length - 1];
+    const isStreaming = lastMessage?.role === 'assistant' && !isLoading;
+    
+    if (isStreaming && isAtBottomRef.current && scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [currentMessages, isLoading]);
 
   return (
     <div className="flex-1 h-screen flex flex-col bg-[#fdfbf7] relative">
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col items-center" ref={scrollRef}>
+      <div 
+        className="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col items-center" 
+        ref={scrollRef}
+        onScroll={handleScroll}
+      >
         {(currentMessages.length === 0 && !isLoading) ? (
           <div className="flex flex-col items-center justify-center h-full w-full max-w-4xl space-y-8 mt-[10vh]">
              <h1 className="text-4xl font-semibold text-gray-800 text-center">Hey, what's on your mind today?</h1>
@@ -87,7 +122,7 @@ const ChatInterface = () => {
         ) : (
           <div className="w-full max-w-3xl space-y-6 pb-24">
             {currentMessages.map((msg, idx) => (
-                <div key={idx}>
+                <div key={idx} id={`message-${idx}`} className="scroll-mt-8">
                     <MessageBubble 
                         message={msg} 
                         onSuggestionClick={(text) => handleSend(text)} 

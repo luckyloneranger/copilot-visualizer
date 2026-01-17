@@ -122,7 +122,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onSuggest
                                         return (
                                             <button 
                                                 onClick={() => {
-                                                    // Extract text content from children (handles nested strings like bold text)
+                                                    // Extract text content from children
                                                     const extractText = (nodes: React.ReactNode): string => {
                                                         if (typeof nodes === 'string') return nodes;
                                                         if (Array.isArray(nodes)) return nodes.map(extractText).join('');
@@ -137,11 +137,17 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onSuggest
                                                     const text = extractText(children);
                                                     if (text) onSuggestionClick(text);
                                                 }}
-                                                className="inline-flex items-center text-purple-600 hover:text-purple-800 font-medium transition-colors border-b border-purple-300 hover:border-purple-600 border-dashed cursor-pointer"
-                                                title="Ask about this concept"
+                                                className="group relative inline-flex items-center text-purple-600 hover:text-purple-800 font-medium transition-colors cursor-pointer"
                                             >
-                                                {children}
-                                                <span className="ml-0.5 text-[10px] text-purple-400 opacity-50">✦</span>
+                                                 <span className="border-b border-purple-300 group-hover:border-purple-600 border-dashed">{children}</span>
+                                                <span className="ml-0.5 text-[10px] text-purple-400 opacity-50 group-hover:opacity-100">✦</span>
+
+                                                {/* Tooltip for Fallback Anchors */}
+                                                <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-max max-w-[200px] -translate-x-1/2 rounded-xl bg-[#0f172a] px-3 py-2 text-xs font-medium text-white opacity-0 shadow-xl transition-all duration-200 group-hover:opacity-100 group-hover:-translate-y-1 z-50 text-center">
+                                                    Explain this concept
+                                                    {/* Arrow */}
+                                                    <span className="absolute left-1/2 top-full -translate-x-1/2 -mt-1 h-2 w-2 rotate-45 bg-[#0f172a]"></span>
+                                                </span>
                                             </button>
                                         );
                                     }
