@@ -17,6 +17,7 @@ export const STORAGE_CONSTANTS = {
   DEBOUNCE_DELAY: 1000, // ms - delay before saving to localStorage
   KEYS: {
     CONVERSATIONS: 'copilot-conversations',
+    CURRENT_CONVERSATION_ID: 'copilot-current-conversation-id',
     SUGGESTIONS_ENABLED: 'copilot-suggestions-enabled',
     INLINE_SUGGESTIONS_ENABLED: 'copilot-inline-suggestions-enabled',
     CONTEXTUAL_HOOK_ENABLED: 'copilot-contextual-hook-enabled',

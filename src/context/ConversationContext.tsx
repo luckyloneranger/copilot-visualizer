@@ -32,17 +32,40 @@ export const ConversationProvider = ({ children }: { children: React.ReactNode }
     []
   );
 
+  const saveCurrentConversationId = useMemo(
+    () => storage.createDebouncedSaver<string | null>(
+      STORAGE_CONSTANTS.KEYS.CURRENT_CONVERSATION_ID,
+      STORAGE_CONSTANTS.DEBOUNCE_DELAY,
+      (value): value is string | null => value === null || (typeof value === 'string' && value.length > 0)
+    ),
+    []
+  );
+
   useEffect(() => {
     const savedConversations = storage.load<Conversation[]>(STORAGE_CONSTANTS.KEYS.CONVERSATIONS, isConversationList);
     if (savedConversations) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setConversations(savedConversations);
     }
+
+    const savedCurrentId = storage.load<string | null>(STORAGE_CONSTANTS.KEYS.CURRENT_CONVERSATION_ID, (v): v is string | null => v === null || typeof v === 'string');
+    if (savedCurrentId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCurrentConversationId(savedCurrentId);
+    }
   }, []);
 
   useEffect(() => {
     saveConversations(conversations.length > 0 ? conversations : null);
-  }, [conversations, saveConversations]);
+    const hasCurrent = conversations.some((c) => c.id === currentConversationId);
+    if (!hasCurrent) {
+      const fallbackId = conversations[0]?.id || null;
+      setCurrentConversationId(fallbackId);
+      saveCurrentConversationId(fallbackId ?? null);
+      return;
+    }
+    saveCurrentConversationId(currentConversationId ?? null);
+  }, [conversations, currentConversationId, saveConversations, saveCurrentConversationId]);
 
   const createNewChat = () => {
     const newId = Date.now().toString();
@@ -54,17 +77,20 @@ export const ConversationProvider = ({ children }: { children: React.ReactNode }
     };
     setConversations((prev) => [newChat, ...prev]);
     setCurrentConversationId(newId);
+    saveCurrentConversationId(newId);
     return newId;
   };
 
   const selectChat = (id: string) => {
     setCurrentConversationId(id);
+    saveCurrentConversationId(id);
   };
 
   const deleteChat = (id: string) => {
     setConversations((prev) => prev.filter((c) => c.id !== id));
     if (currentConversationId === id) {
       setCurrentConversationId(null);
+      saveCurrentConversationId(null);
     }
   };
 
