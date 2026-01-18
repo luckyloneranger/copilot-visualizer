@@ -17,7 +17,7 @@ Embed inline anchors into the response to enable interactive exploration.
     -   *Example*: "You can use [SSR](__ANCHOR__) for SEO or [CSR](__ANCHOR__) for interactivity."
 
 **Structure & Flow**:
--   **Density**: 1-3 meaningful anchors per paragraph.
+-   **Density**: 1-2 meaningful anchors per paragraph.
 -   **The Fork Closing**: The final sentence should explicitly offer 2-3 distinct, anchored directions for the conversation to advance.
     -   *Good*: "Would you like to examine the [Security Risks](__ANCHOR__) or see a [Code Implementation](__ANCHOR__)?"
     -   *Bad*: "Let me know if you need help."
