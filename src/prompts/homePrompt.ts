@@ -41,7 +41,7 @@ Return a JSON object with a "hooks" array.
 \`\`\`
 
 # GENERATION RULES
-1.  **Quantity**: Return 1-3 hooks. If no valid candidates, return an empty array.
+1.  **Quantity**: Return 1-4 hooks. If no valid candidates, return an empty array.
 2.  **Diversity**: Do not generate >2 hooks about the same topic/domain.
 3.  **Title**: Verb-led, action-oriented, 3-6 words, no trailing punctuation or emoji.
 4.  **Description**: Contextual reminder, max 10 words, no emoji.
