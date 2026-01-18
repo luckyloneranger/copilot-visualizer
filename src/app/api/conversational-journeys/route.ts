@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { AzureOpenAI } from 'openai';
-import { homePrompt } from './homePrompt';
+import { DEFAULT_PROMPTS } from '@/prompts/defaultPrompts';
+import { Conversation } from '@/types';
 
 export async function POST(req: Request) {
   try {
-    const { conversations, apiConfig } = await req.json();
+    const { conversations, apiConfig, promptOverrides } = await req.json();
 
     const endpoint = apiConfig?.endpoint || process.env.AZURE_OPENAI_ENDPOINT;
     const apiKey = apiConfig?.apiKey || process.env.AZURE_OPENAI_API_KEY;
@@ -20,16 +21,18 @@ export async function POST(req: Request) {
     }
 
     // Format history for the prompt (limit to last 5 chats or titles)
-    const historySummary = conversations.slice(0, 5).map((c: any) => {
-        const lastMsg = c.messages[c.messages.length - 1]?.content || "";
-        return `- Chat Title: "${c.title}". Last User Input/Context: "${lastMsg.slice(0, 100)}..."`;
+    const historySummary = conversations.slice(0, 5).map((c: Conversation) => {
+      const lastMsg = c.messages[c.messages.length - 1]?.content || "";
+      return `- Chat Title: "${c.title}". Last User Input/Context: "${lastMsg.slice(0, 100)}..."`;
     }).join('\n');
 
     const client = new AzureOpenAI({ endpoint, apiKey, apiVersion, deployment });
 
+    const homePromptSource = promptOverrides?.homePrompt?.trim() ? promptOverrides.homePrompt : DEFAULT_PROMPTS.homePrompt;
+
     const completion = await client.chat.completions.create({
       messages: [
-        { role: 'system', content: homePrompt },
+        { role: 'system', content: homePromptSource },
         { role: 'user', content: `Here is the user's conversation history:\n\n${historySummary}` }
       ],
       model: deployment,

@@ -14,7 +14,8 @@ export const useChatService = () => {
         suggestionsEnabled, 
         inlineSuggestionsEnabled, 
         getActivePersona,
-        apiConfig 
+        apiConfig,
+        promptOverrides
     } = useChat();
 
     const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +48,8 @@ export const useChatService = () => {
                 suggestionsEnabled, 
                 inlineSuggestionsEnabled, 
                 activePersona, 
-                apiConfig
+                apiConfig,
+                promptOverrides
             );
 
             if (data.content && chatId) {
@@ -84,10 +86,11 @@ export const useChatService = () => {
                         suggestionsEnabled,
                         inlineSuggestionsEnabled,
                         activePersona,
-                        apiConfig
+                        apiConfig,
+                        promptOverrides
                     );
                     updateLastMessage(chatId, personalData.content, personalData.suggestions);
-                } catch (e) {
+                } catch {
                      // Fallback if personalization fails:  
                      // Keep the original anchors so they still render as clickable "Pivot Points" 
                      // (handled by MessageBubble's __ANCHOR__ renderer)

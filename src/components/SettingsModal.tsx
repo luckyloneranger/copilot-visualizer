@@ -13,6 +13,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const [showApiKey, setShowApiKey] = useState(false);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setConfig(apiConfig);
     }, [apiConfig, isOpen]);
 

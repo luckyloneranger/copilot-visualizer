@@ -25,6 +25,14 @@ export interface ApiConfiguration {
     apiVersion: string;
 }
 
+export interface PromptOverrides {
+  systemPrompt: string;
+  anchorPrompt: string;
+  suggestionPrompt: string;
+  inlineSuggestionPrompt: string;
+  homePrompt: string;
+}
+
 export interface RichHook {
     title: string;
     description: string;

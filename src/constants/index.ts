@@ -23,6 +23,7 @@ export const STORAGE_CONSTANTS = {
     PERSONAS: 'copilot-personas',
     ACTIVE_PERSONA: 'copilot-active-persona',
     API_CONFIG: 'copilot-api-config',
+    PROMPT_OVERRIDES: 'copilot-prompt-overrides',
   }
 } as const;
 

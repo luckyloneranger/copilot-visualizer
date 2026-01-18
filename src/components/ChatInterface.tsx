@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Mic, Plus as PlusIcon } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Send, Mic, Plus as PlusIcon, FlaskConical, Settings as SettingsIcon, User as UserIcon } from 'lucide-react';
 import { useChat } from '@/context/ChatContext';
 import { MessageBubble } from './MessageBubble';
 import { useChatService } from '@/hooks/useChatService';
@@ -10,13 +10,17 @@ import { SuggestionsGrid } from './SuggestionsGrid';
 import { SuggestionItem } from '@/types';
 import { apiService } from '@/services/api';
 import { DEFAULT_CHIPS } from '@/constants';
+import PersonaModal from './PersonaModal';
 
 const ChatInterface = () => {
-  const { currentMessages, contextualHookEnabled, conversations, apiConfig } = useChat();
+  const { currentMessages, contextualHookEnabled, conversations, apiConfig, promptOverrides, personas, activePersonaId, setActivePersona, addPersona } = useChat();
   const { sendMessage, isLoading } = useChatService();
   const [input, setInput] = useState('');
   const [homeSuggestions, setHomeSuggestions] = useState<SuggestionItem[]>([]);
   const [isHooksLoading, setIsHooksLoading] = useState(false);
+  const [showPersonaModal, setShowPersonaModal] = useState(false);
+  const [showPersonaMenu, setShowPersonaMenu] = useState(false);
+  const personaMenuRef = useRef<HTMLDivElement | null>(null);
   
   const { scrollRef, handleScroll } = useChatScroll(currentMessages, isLoading);
 
@@ -29,7 +33,7 @@ const ChatInterface = () => {
         }
 
         setIsHooksLoading(true);
-        const hooks = await apiService.fetchConversationalHooks(conversations, apiConfig);
+        const hooks = await apiService.fetchConversationalHooks(conversations, apiConfig, promptOverrides);
         setHomeSuggestions(hooks);
         setIsHooksLoading(false);
     };
@@ -43,9 +47,27 @@ const ChatInterface = () => {
     // 3. A NEW conversation is added (conversations.length changes)
     // We intentionally ignore updates to existing conversation content to reduce API calls.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contextualHookEnabled, currentMessages.length, conversations.length, apiConfig]);
+  }, [contextualHookEnabled, currentMessages.length, conversations.length, apiConfig, promptOverrides]);
 
   const activeChips = (contextualHookEnabled && homeSuggestions.length > 0) ? homeSuggestions : DEFAULT_CHIPS;
+
+  const openPromptLab = () => {
+    window.dispatchEvent(new Event('open-prompt-lab'));
+  };
+
+  const openSettings = () => {
+    window.dispatchEvent(new Event('open-settings-modal'));
+  };
+
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (personaMenuRef.current && !personaMenuRef.current.contains(e.target as Node)) {
+        setShowPersonaMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
 
   const handleSend = async (textOverride?: string) => {
     const textToSend = textOverride || input;
@@ -64,6 +86,63 @@ const ChatInterface = () => {
 
   return (
     <div className="flex-1 h-screen flex flex-col bg-[#fdfbf7] relative">
+      <div className="absolute top-4 right-4 flex flex-col items-end gap-2 z-10">
+        <div className="relative" ref={personaMenuRef}>
+          <button
+            onClick={() => setShowPersonaMenu((v) => !v)}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-full shadow-sm hover:bg-gray-50"
+          >
+            <UserIcon size={16} className="text-gray-600" />
+            <span>{personas.find(p => p.id === activePersonaId)?.name || 'Persona'}</span>
+          </button>
+          {showPersonaMenu && (
+            <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+              <div className="max-h-64 overflow-y-auto">
+                {personas.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => { setActivePersona(p.id); setShowPersonaMenu(false); }}
+                    className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <div className="flex flex-col text-left">
+                      <span className="font-medium truncate">{p.name}</span>
+                      <span className="text-xs text-gray-400 truncate">{p.role}</span>
+                    </div>
+                    {activePersonaId === p.id && <span className="text-blue-600 text-xs font-semibold">Active</span>}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => { setShowPersonaModal(true); setShowPersonaMenu(false); }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 border-t border-gray-100"
+              >
+                <span className="text-lg leading-none">＋</span>
+                <span>Add Persona</span>
+              </button>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={openPromptLab}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-full shadow-sm hover:bg-gray-50"
+        >
+          <FlaskConical size={16} className="text-gray-600" />
+          <span>Prompt Lab</span>
+        </button>
+        <button
+          onClick={openSettings}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-full shadow-sm hover:bg-gray-50"
+        >
+          <SettingsIcon size={16} className="text-gray-600" />
+          <span>Settings</span>
+        </button>
+      </div>
+
+      <PersonaModal
+        isOpen={showPersonaModal}
+        onClose={() => setShowPersonaModal(false)}
+        onAdd={(persona) => { addPersona(persona); setShowPersonaModal(false); }}
+      />
       {/* Messages Area */}
       <div 
         className="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col items-center" 
@@ -72,7 +151,7 @@ const ChatInterface = () => {
       >
         {(currentMessages.length === 0 && !isLoading) ? (
           <div className="flex flex-col items-center justify-center h-full w-full max-w-4xl space-y-8 mt-[10vh]">
-             <h1 className="text-4xl font-semibold text-gray-800 text-center">Hey, what's on your mind today?</h1>
+             <h1 className="text-4xl font-semibold text-gray-800 text-center">Hey, what&apos;s on your mind today?</h1>
           </div>
         ) : (
           <div className="w-full max-w-3xl space-y-6 pb-24">

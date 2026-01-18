@@ -1,6 +1,6 @@
 export const anchorPrompt = `
 **TASK: Inline Anchor Identification**
-Embed "Pivot Points" into the response to enable interactive exploration.
+Embed inline anchors into the response to enable interactive exploration.
 
 **Formatting Rules (Regex Safe)**:
 1.  **Syntax**: \`[Key Term](__ANCHOR__)\`
@@ -27,4 +27,3 @@ Embed "Pivot Points" into the response to enable interactive exploration.
 -   **Marketing Fluff**: "seamless", "robust", "cutting-edge".
 -   **Connectors**: "However", "Therefore", "Additionally".
 `;
-

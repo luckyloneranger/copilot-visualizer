@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { AzureOpenAI } from 'openai';
-import { suggestionPrompt } from './suggestionPrompt';
-import { inlineSuggestionPrompt } from './inlineSuggestionPrompt';
+import { DEFAULT_PROMPTS } from '@/prompts/defaultPrompts';
 
 export async function POST(req: Request) {
   try {
@@ -11,7 +10,8 @@ export async function POST(req: Request) {
         suggestionsEnabled, 
         inlineSuggestionsEnabled, 
         activePersona,
-        apiConfig 
+        apiConfig,
+        promptOverrides
     } = await req.json();
 
     const endpoint = apiConfig?.endpoint || process.env.AZURE_OPENAI_ENDPOINT;
@@ -28,6 +28,9 @@ export async function POST(req: Request) {
     // --- STEP 2: HYDRATE & PERSONALIZE ---
     let finalSuggestions: string[] = [];
     let hydratedContent = mainContent;
+
+    const inlinePromptSource = promptOverrides?.inlineSuggestionPrompt?.trim() ? promptOverrides.inlineSuggestionPrompt : DEFAULT_PROMPTS.inlineSuggestionPrompt;
+    const suggestionPromptSource = promptOverrides?.suggestionPrompt?.trim() ? promptOverrides.suggestionPrompt : DEFAULT_PROMPTS.suggestionPrompt;
 
     // Only proceed if we have either inline anchors to fill OR suggestions to generate
     const hasAnchors = mainContent.includes('(__ANCHOR__)');
@@ -48,11 +51,11 @@ export async function POST(req: Request) {
         }
 
         if (inlineSuggestionsEnabled && hasAnchors) {
-            personalizationPrompt += `\n\n${inlineSuggestionPrompt}\n\nINSTRUCTION: Return a JSON object where potential keys are the anchor terms and values are the generated questions. Only include keys for anchors you decided to keep.`;
+            personalizationPrompt += `\n\n${inlinePromptSource}\n\nINSTRUCTION: Return a JSON object where potential keys are the anchor terms and values are the generated questions. Only include keys for anchors you decided to keep.`;
         }
         
         if (suggestionsEnabled) {
-            personalizationPrompt += `\n\n${suggestionPrompt}\n\nINSTRUCTION: Return a JSON array named "pills".`;
+            personalizationPrompt += `\n\n${suggestionPromptSource}\n\nINSTRUCTION: Return a JSON array named "pills".`;
         }
 
         personalizationPrompt += `\n\n**Output Format** (JSON ONLY):\n{

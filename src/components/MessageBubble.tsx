@@ -13,7 +13,7 @@ const preprocessContent = (content: string) => {
     
     // Cleanup: Remove "Anchor:" labels and bullet points if they precede a link/anchor
     // This fixes issues where the LLM breaks flow by listing anchors explicitly
-    let processed = content.replace(/(?:\r\n|\r|\n|^)\s*[\*\-]?\s*Anchor:\s*(?=\[)/gi, '\n');
+    const processed = content.replace(/(?:\r\n|\r|\n|^)\s*[\*\-]?\s*Anchor:\s*(?=\[)/gi, '\n');
     
     // Fix broken suggestion links (handle nested parentheses and encoding)
     // We manually parse to handle balanced parentheses which regex struggles with
@@ -83,7 +83,7 @@ const preprocessContent = (content: string) => {
         try {
             // Normalize encoding: decode first to avoid double-encoding, then encode
             encodedSuggestion = encodeURIComponent(decodeURIComponent(rawSuggestion));
-        } catch (e) {
+        } catch {
             encodedSuggestion = encodeURIComponent(rawSuggestion);
         }
 
@@ -113,15 +113,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onSuggest
                             remarkPlugins={[remarkGfm]}
                             urlTransform={(value: string) => value}
                             components={{
-                                h1: ({node, ...props}) => <h1 className="text-2xl font-bold mb-4 mt-6 text-gray-900" {...props} />,
-                                h2: ({node, ...props}) => <h2 className="text-xl font-bold mb-3 mt-5 text-gray-900" {...props} />,
-                                h3: ({node, ...props}) => <h3 className="text-lg font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2" {...props} />,
-                                p: ({node, ...props}) => <p className="mb-4 leading-7 text-gray-800" {...props} />,
-                                ul: ({node, ...props}) => <ul className="mb-4 space-y-2 list-disc pl-5" {...props} />,
-                                ol: ({node, ...props}) => <ol className="mb-4 space-y-2 list-decimal pl-5" {...props} />,
-                                li: ({node, ...props}) => <li className="pl-1" {...props} />,
-                                strong: ({node, ...props}) => <strong className="font-semibold text-gray-900" {...props} />,
-                                a: ({node, href, children, ...props}) => {
+                                h1: ({ ...props }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-gray-900" {...props} />,
+                                h2: ({ ...props }) => <h2 className="text-xl font-bold mb-3 mt-5 text-gray-900" {...props} />,
+                                h3: ({ ...props }) => <h3 className="text-lg font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2" {...props} />,
+                                p: ({ ...props }) => <p className="mb-4 leading-7 text-gray-800" {...props} />,
+                                ul: ({ ...props }) => <ul className="mb-4 space-y-2 list-disc pl-5" {...props} />,
+                                ol: ({ ...props }) => <ol className="mb-4 space-y-2 list-decimal pl-5" {...props} />,
+                                li: ({ ...props }) => <li className="pl-1" {...props} />,
+                                strong: ({ ...props }) => <strong className="font-semibold text-gray-900" {...props} />,
+                                a: ({ href, children, ...props }) => {
                                     if (href === '__ANCHOR__') {
                                         return (
                                             <button 

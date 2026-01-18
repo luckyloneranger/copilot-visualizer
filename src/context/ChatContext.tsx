@@ -1,8 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Message, UserPersona, Conversation, ApiConfiguration } from '@/types';
+import { Message, UserPersona, Conversation, ApiConfiguration, PromptOverrides } from '@/types';
 import { STORAGE_CONSTANTS, DEFAULT_PERSONAS } from '@/constants';
+import { DEFAULT_PROMPTS } from '@/prompts/defaultPrompts';
 
 interface ChatContextType {
   conversations: Conversation[];
@@ -31,6 +32,11 @@ interface ChatContextType {
   // API Config
   apiConfig: ApiConfiguration;
   updateApiConfig: (config: ApiConfiguration) => void;
+
+  // Prompt overrides
+  promptOverrides: PromptOverrides;
+  updatePromptOverrides: (overrides: Partial<PromptOverrides>) => void;
+  resetPromptOverrides: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -50,6 +56,9 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       apiVersion: '2024-02-15-preview'
   });
 
+  // Prompt Overrides
+  const [promptOverrides, setPromptOverrides] = useState<PromptOverrides>({ ...DEFAULT_PROMPTS });
+
   // Persona State
   const [personas, setPersonas] = useState<UserPersona[]>([...DEFAULT_PERSONAS]);
   const [activePersonaId, setActivePersonaId] = useState<string>('default');
@@ -63,10 +72,12 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     const savedPersonas = localStorage.getItem(STORAGE_CONSTANTS.KEYS.PERSONAS);
     const savedActivePersona = localStorage.getItem(STORAGE_CONSTANTS.KEYS.ACTIVE_PERSONA);
     const savedApiConfig = localStorage.getItem(STORAGE_CONSTANTS.KEYS.API_CONFIG);
+    const savedPromptOverrides = localStorage.getItem(STORAGE_CONSTANTS.KEYS.PROMPT_OVERRIDES);
 
     if (saved) {
       try {
          const parsed = JSON.parse(saved);
+         // eslint-disable-next-line react-hooks/set-state-in-effect
          setConversations(parsed);
       } catch (e) {
         console.error("Failed to load conversations", e);
@@ -85,14 +96,24 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
             console.error("Failed to load api config", e);
         }
     }
+    if (savedPromptOverrides) {
+      try {
+        const parsedOverrides = JSON.parse(savedPromptOverrides);
+        setPromptOverrides({ ...DEFAULT_PROMPTS, ...parsedOverrides });
+      } catch (e) {
+        console.error("Failed to load prompt overrides", e);
+      }
+    }
   }, []);
 
   // Save to database
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-        if (conversations.length > 0) {
-            localStorage.setItem(STORAGE_CONSTANTS.KEYS.CONVERSATIONS, JSON.stringify(conversations));
-        }
+      if (conversations.length > 0) {
+        localStorage.setItem(STORAGE_CONSTANTS.KEYS.CONVERSATIONS, JSON.stringify(conversations));
+      } else {
+        localStorage.removeItem(STORAGE_CONSTANTS.KEYS.CONVERSATIONS);
+      }
     }, STORAGE_CONSTANTS.DEBOUNCE_DELAY);
 
     return () => clearTimeout(timeoutId);
@@ -105,7 +126,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.setItem(STORAGE_CONSTANTS.KEYS.PERSONAS, JSON.stringify(personas));
       localStorage.setItem(STORAGE_CONSTANTS.KEYS.ACTIVE_PERSONA, activePersonaId);
       localStorage.setItem(STORAGE_CONSTANTS.KEYS.API_CONFIG, JSON.stringify(apiConfig));
-  }, [suggestionsEnabled, inlineSuggestionsEnabled, contextualHookEnabled, personas, activePersonaId, apiConfig]);
+      localStorage.setItem(STORAGE_CONSTANTS.KEYS.PROMPT_OVERRIDES, JSON.stringify(promptOverrides));
+    }, [suggestionsEnabled, inlineSuggestionsEnabled, contextualHookEnabled, personas, activePersonaId, apiConfig, promptOverrides]);
 
   const toggleSuggestions = () => {
       setSuggestionsEnabled(prev => !prev);
@@ -122,6 +144,14 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const updateApiConfig = (config: ApiConfiguration) => {
       setApiConfig(config);
   };
+
+    const updatePromptOverrides = (overrides: Partial<PromptOverrides>) => {
+      setPromptOverrides(prev => ({ ...prev, ...overrides }));
+    };
+
+    const resetPromptOverrides = () => {
+        setPromptOverrides({ ...DEFAULT_PROMPTS });
+    };
 
   // Persona Handlers
   const addPersona = (persona: Omit<UserPersona, 'id'>) => {
@@ -245,7 +275,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       deletePersona,
       getActivePersona,
       apiConfig,
-      updateApiConfig
+      updateApiConfig,
+      promptOverrides,
+      updatePromptOverrides,
+      resetPromptOverrides
     }}>
       {children}
     </ChatContext.Provider>

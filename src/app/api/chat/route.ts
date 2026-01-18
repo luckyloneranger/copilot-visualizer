@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import { AzureOpenAI } from 'openai';
-import { systemPrompt } from './systemPrompt';
-import { anchorPrompt } from './anchorPrompt';
+import { DEFAULT_PROMPTS } from '@/prompts/defaultPrompts';
 
 export async function POST(req: Request) {
   try {
-    const { messages, inlineSuggestionsEnabled, apiConfig } = await req.json();
+    const { messages, inlineSuggestionsEnabled, apiConfig, promptOverrides } = await req.json();
 
     const endpoint = apiConfig?.endpoint || process.env.AZURE_OPENAI_ENDPOINT;
     const apiKey = apiConfig?.apiKey || process.env.AZURE_OPENAI_API_KEY;
@@ -27,7 +26,10 @@ export async function POST(req: Request) {
     });
 
     // --- STEP 1: Generate OBJECTIVE Main Content ---
-    let contentSystemPrompt = systemPrompt;
+    const systemPromptSource = promptOverrides?.systemPrompt?.trim() ? promptOverrides.systemPrompt : DEFAULT_PROMPTS.systemPrompt;
+    const anchorPromptSource = promptOverrides?.anchorPrompt?.trim() ? promptOverrides.anchorPrompt : DEFAULT_PROMPTS.anchorPrompt;
+
+    let contentSystemPrompt = systemPromptSource;
 
     // Strict instruction for Call 1
     contentSystemPrompt += `\n\n**CRITICAL INSTRUCTION**: Your response must be **OBJECTIVE, NEUTRAL, and STANDARD**. 
@@ -37,7 +39,7 @@ export async function POST(req: Request) {
     - Do NOT provide "next steps" or "recommendations" lists at the end of your response.`;
 
     if (inlineSuggestionsEnabled) {
-        contentSystemPrompt += `\n\n${anchorPrompt}`;
+      contentSystemPrompt += `\n\n${anchorPromptSource}`;
     }
 
     const completion = await client.chat.completions.create({

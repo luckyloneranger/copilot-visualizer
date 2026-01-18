@@ -1,12 +1,12 @@
-import { Message, ApiConfiguration, UserPersona, Conversation, SuggestionItem } from '@/types';
+import { Message, ApiConfiguration, UserPersona, Conversation, SuggestionItem, PromptOverrides } from '@/types';
 
 export const apiService = {
-  async fetchConversationalHooks(conversations: Conversation[], apiConfig: ApiConfiguration): Promise<SuggestionItem[]> {
+  async fetchConversationalHooks(conversations: Conversation[], apiConfig: ApiConfiguration, promptOverrides: PromptOverrides): Promise<SuggestionItem[]> {
     try {
       const response = await fetch('/api/conversational-journeys', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversations, apiConfig })
+        body: JSON.stringify({ conversations, apiConfig, promptOverrides })
       });
       const data = await response.json();
       return Array.isArray(data.hooks) ? data.hooks : [];
@@ -21,7 +21,8 @@ export const apiService = {
     suggestionsEnabled: boolean, 
     inlineSuggestionsEnabled: boolean, 
     activePersona: UserPersona | undefined, 
-    apiConfig: ApiConfiguration
+    apiConfig: ApiConfiguration,
+    promptOverrides: PromptOverrides
   ) {
     const response = await fetch('/api/chat', {
         method: 'POST',
@@ -31,7 +32,8 @@ export const apiService = {
             suggestionsEnabled,
             inlineSuggestionsEnabled,
             activePersona,
-            apiConfig
+            apiConfig,
+            promptOverrides
         }),
     });
     return response.json();
@@ -43,7 +45,8 @@ export const apiService = {
     suggestionsEnabled: boolean,
     inlineSuggestionsEnabled: boolean,
     activePersona: UserPersona | undefined,
-    apiConfig: ApiConfiguration
+    apiConfig: ApiConfiguration,
+    promptOverrides: PromptOverrides
   ) {
     const response = await fetch('/api/personalize', {
         method: 'POST',
@@ -54,7 +57,8 @@ export const apiService = {
             suggestionsEnabled,
             inlineSuggestionsEnabled,
             activePersona,
-            apiConfig
+        apiConfig,
+        promptOverrides
         })
     });
     if (!response.ok) throw new Error('Personalization failed');
