@@ -1,50 +1,19 @@
 import { NextResponse } from 'next/server';
-import { AzureOpenAI } from 'openai';
-import { DEFAULT_PROMPTS } from '@/prompts/defaultPrompts';
+import { createAzureClient } from '@/services/openaiClient';
+import { buildChatSystemPrompt } from '@/services/promptPipeline';
 
 export async function POST(req: Request) {
   try {
     const { messages, inlineSuggestionsEnabled, apiConfig, promptOverrides } = await req.json();
 
-    const endpoint = apiConfig?.endpoint || process.env.AZURE_OPENAI_ENDPOINT;
-    const apiKey = apiConfig?.apiKey || process.env.AZURE_OPENAI_API_KEY;
-    const deployment = apiConfig?.deployment || process.env.AZURE_OPENAI_DEPLOYMENT;
-    const apiVersion = apiConfig?.apiVersion || process.env.AZURE_OPENAI_API_VERSION;
-
-    if (!endpoint || !apiKey || !deployment) {
-      return NextResponse.json(
-        { error: 'Azure OpenAI credentials are not configured. Please set them in the settings or environment variables.' },
-        { status: 500 }
-      );
-    }
-
-    const client = new AzureOpenAI({
-      endpoint,
-      apiKey,
-      apiVersion,
-      deployment,
-    });
+    const { client, config } = createAzureClient(apiConfig);
 
     // --- STEP 1: Generate OBJECTIVE Main Content ---
-    const systemPromptSource = promptOverrides?.systemPrompt?.trim() ? promptOverrides.systemPrompt : DEFAULT_PROMPTS.systemPrompt;
-    const anchorPromptSource = promptOverrides?.anchorPrompt?.trim() ? promptOverrides.anchorPrompt : DEFAULT_PROMPTS.anchorPrompt;
-
-    let contentSystemPrompt = systemPromptSource;
-
-    // Strict instruction for Call 1
-    contentSystemPrompt += `\n\n**CRITICAL INSTRUCTION**: Your response must be **OBJECTIVE, NEUTRAL, and STANDARD**. 
-    - Do NOT adapt your tone, style, or depth to any specific user persona. 
-    - Provide a general-purpose explanation suitable for a wide audience.
-    - Do NOT provide code blocks unless specifically asked for in the user's message.
-    - Do NOT provide "next steps" or "recommendations" lists at the end of your response.`;
-
-    if (inlineSuggestionsEnabled) {
-      contentSystemPrompt += `\n\n${anchorPromptSource}`;
-    }
+    const contentSystemPrompt = buildChatSystemPrompt(promptOverrides, inlineSuggestionsEnabled);
 
     const completion = await client.chat.completions.create({
       messages: [{ role: 'system', content: contentSystemPrompt }, ...messages],
-      model: deployment,
+      model: config.deployment,
     });
 
     const mainContent = completion.choices[0].message.content || "";

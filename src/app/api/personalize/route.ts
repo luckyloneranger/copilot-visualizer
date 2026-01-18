@@ -1,81 +1,53 @@
 import { NextResponse } from 'next/server';
-import { AzureOpenAI } from 'openai';
-import { DEFAULT_PROMPTS } from '@/prompts/defaultPrompts';
+import { createAzureClient } from '@/services/openaiClient';
+import { buildPersonalizationPrompt, safeParseJson } from '@/services/promptPipeline';
 
 export async function POST(req: Request) {
   try {
-    const { 
-        mainContent,
-        userMessage, // New field 
-        suggestionsEnabled, 
-        inlineSuggestionsEnabled, 
-        activePersona,
-        apiConfig,
-        promptOverrides
-    } = await req.json();
+        const { 
+            mainContent,
+            userMessage, // New field 
+            suggestionsEnabled, 
+            inlineSuggestionsEnabled, 
+            activePersona,
+            apiConfig,
+            promptOverrides
+        } = await req.json();
 
-    const endpoint = apiConfig?.endpoint || process.env.AZURE_OPENAI_ENDPOINT;
-    const apiKey = apiConfig?.apiKey || process.env.AZURE_OPENAI_API_KEY;
-    const deployment = apiConfig?.deployment || process.env.AZURE_OPENAI_DEPLOYMENT;
-    const apiVersion = apiConfig?.apiVersion || process.env.AZURE_OPENAI_API_VERSION;
-
-    if (!endpoint || !apiKey || !deployment) {
-      return NextResponse.json({ error: 'Config missing' }, { status: 500 });
-    }
-
-    const client = new AzureOpenAI({ endpoint, apiKey, apiVersion, deployment });
+        const { client, config } = createAzureClient(apiConfig);
 
     // --- STEP 2: HYDRATE & PERSONALIZE ---
     let finalSuggestions: string[] = [];
     let hydratedContent = mainContent;
 
-    const inlinePromptSource = promptOverrides?.inlineSuggestionPrompt?.trim() ? promptOverrides.inlineSuggestionPrompt : DEFAULT_PROMPTS.inlineSuggestionPrompt;
-    const suggestionPromptSource = promptOverrides?.suggestionPrompt?.trim() ? promptOverrides.suggestionPrompt : DEFAULT_PROMPTS.suggestionPrompt;
+    const personaBlurb = activePersona && activePersona.id !== 'default'
+      ? `${activePersona.role} (${activePersona.context})`
+      : 'General User';
 
     // Only proceed if we have either inline anchors to fill OR suggestions to generate
     const hasAnchors = mainContent.includes('(__ANCHOR__)');
     
     if (suggestionsEnabled || (inlineSuggestionsEnabled && hasAnchors)) {
         
-        let personalizationPrompt = `You are a smart Personalization Engine. Your goal is to select the BEST follow-up actions based on the content.
-        
-        PRIORITY 1: Content Relevance. The suggestion must make sense for the topic discussed.
-        PRIORITY 2: Persona Alignment. ONLY if the suggestion is relevant, adapt its phrasing to the persona.
-        
-        CRITICAL RULE: Do NOT force a persona-based question if it feels unnatural or irrelevant to the text. It is better to have NO suggestion than a bad one.`;
-        
-        if (activePersona && activePersona.id !== 'default') {
-            personalizationPrompt += `\n**User Persona**: ${activePersona.role} (${activePersona.context})\n`;
-        } else {
-             personalizationPrompt += `\n**User Persona**: General User\n`;
-        }
-
-        if (inlineSuggestionsEnabled && hasAnchors) {
-            personalizationPrompt += `\n\n${inlinePromptSource}\n\nINSTRUCTION: Return a JSON object where potential keys are the anchor terms and values are the generated questions. Only include keys for anchors you decided to keep.`;
-        }
-        
-        if (suggestionsEnabled) {
-            personalizationPrompt += `\n\n${suggestionPromptSource}\n\nINSTRUCTION: Return a JSON array named "pills".`;
-        }
-
-        personalizationPrompt += `\n\n**Output Format** (JSON ONLY):\n{
-            ${(inlineSuggestionsEnabled && hasAnchors) ? '"anchors": { "Term Name From Text": "Personalized Question", ... }' : ''}
-            ${(inlineSuggestionsEnabled && hasAnchors && suggestionsEnabled) ? ',' : ''}
-            ${suggestionsEnabled ? '"pills": ["Question 1", "Question 2", ...]' : ''}
-        }`;
+        const personalizationPrompt = buildPersonalizationPrompt(promptOverrides, {
+          inlineSuggestionsEnabled,
+          suggestionsEnabled,
+          hasAnchors,
+          personaBlurb,
+        });
 
         const personalizationCompletion = await client.chat.completions.create({
             messages: [
                 { role: 'system', content: personalizationPrompt },
                 { role: 'user', content: `Original User Query: "${userMessage || 'Unknown'}"\n\nAssistant's Response:\n"${mainContent}"` } 
             ],
-            model: deployment,
+            model: config.deployment,
             response_format: { type: "json_object" } 
         });
 
         try {
             const rawJson = personalizationCompletion.choices[0].message.content || "{}";
-            const personalizationData = JSON.parse(rawJson);
+            const personalizationData = safeParseJson<Record<string, any>>(rawJson, {});
 
             // 1. Hydrate Inline Anchors
             if (personalizationData.anchors) {

@@ -1,10 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { useChat } from '@/context/ChatContext';
+import { useNotifications } from '@/context/NotificationContext';
 import { Message } from '@/types';
 import { apiService } from '@/services/api';
 import { STREAMING_CONSTANTS } from '@/constants';
 
-export const useChatService = () => {
+type ChatServiceResult = {
+    isLoading: boolean;
+    sendMessage: (text: string) => Promise<void>;
+};
+
+export const useChatService = (): ChatServiceResult => {
     const { 
         currentMessages, 
         addMessage, 
@@ -17,6 +23,7 @@ export const useChatService = () => {
         apiConfig,
         promptOverrides
     } = useChat();
+    const { notify } = useNotifications();
 
     const [isLoading, setIsLoading] = useState(false);
     
@@ -36,7 +43,6 @@ export const useChatService = () => {
 
         const userMessage: Message = { role: 'user', content: text };
         addMessage(chatId, userMessage);
-        
         setIsLoading(true);
 
         try {
@@ -91,14 +97,13 @@ export const useChatService = () => {
                     );
                     updateLastMessage(chatId, personalData.content, personalData.suggestions);
                 } catch {
-                     // Fallback if personalization fails:  
-                     // Keep the original anchors so they still render as clickable "Pivot Points" 
-                     // (handled by MessageBubble's __ANCHOR__ renderer)
+                    notify('Personalization failed, showing base response.', 'warning');
                     updateLastMessage(chatId, mainContent);
                 }
 
             } else {
                 console.error('Error:', data.error);
+                notify(data.error || 'Chat request failed. Please check your settings.', 'error');
                 if(chatId) addMessage(chatId, { 
                     role: 'assistant', 
                     content: data.error ? `Error: ${data.error}` : "Sorry, I encountered an error. Please check your settings." 
@@ -106,6 +111,7 @@ export const useChatService = () => {
             }
         } catch (error) {
             console.error('Fetch error:', error);
+            notify('Unable to reach the server. Check your connection or settings.', 'error');
             if(chatId) addMessage(chatId, { 
                 role: 'assistant', 
                 content: "Sorry, I couldn't reach the server. Please check your connection or settings." 

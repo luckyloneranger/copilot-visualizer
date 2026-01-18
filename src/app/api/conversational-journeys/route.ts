@@ -1,20 +1,11 @@
 import { NextResponse } from 'next/server';
-import { AzureOpenAI } from 'openai';
-import { DEFAULT_PROMPTS } from '@/prompts/defaultPrompts';
 import { Conversation } from '@/types';
+import { createAzureClient } from '@/services/openaiClient';
+import { resolveHomePrompt, safeParseJson } from '@/services/promptPipeline';
 
 export async function POST(req: Request) {
   try {
     const { conversations, apiConfig, promptOverrides } = await req.json();
-
-    const endpoint = apiConfig?.endpoint || process.env.AZURE_OPENAI_ENDPOINT;
-    const apiKey = apiConfig?.apiKey || process.env.AZURE_OPENAI_API_KEY;
-    const deployment = apiConfig?.deployment || process.env.AZURE_OPENAI_DEPLOYMENT;
-    const apiVersion = apiConfig?.apiVersion || process.env.AZURE_OPENAI_API_VERSION;
-
-    if (!endpoint || !apiKey || !deployment) {
-      return NextResponse.json({ error: 'Config missing' }, { status: 500 });
-    }
 
     if (!conversations || conversations.length === 0) {
         return NextResponse.json({ hooks: [] });
@@ -26,24 +17,24 @@ export async function POST(req: Request) {
       return `- Chat Title: "${c.title}". Last User Input/Context: "${lastMsg.slice(0, 100)}..."`;
     }).join('\n');
 
-    const client = new AzureOpenAI({ endpoint, apiKey, apiVersion, deployment });
+    const { client, config } = createAzureClient(apiConfig);
 
-    const homePromptSource = promptOverrides?.homePrompt?.trim() ? promptOverrides.homePrompt : DEFAULT_PROMPTS.homePrompt;
+    const homePromptSource = resolveHomePrompt(promptOverrides);
 
     const completion = await client.chat.completions.create({
       messages: [
         { role: 'system', content: homePromptSource },
         { role: 'user', content: `Here is the user's conversation history:\n\n${historySummary}` }
       ],
-      model: deployment,
+      model: config.deployment,
       response_format: { type: "json_object" }
     });
 
     const content = completion.choices[0].message.content || "{}";
-    const data = JSON.parse(content);
+    const data = safeParseJson<Record<string, unknown>>(content, {});
 
     return NextResponse.json({
-        hooks: data.hooks || []
+        hooks: Array.isArray((data as any).hooks) ? (data as any).hooks : []
     });
 
   } catch (error) {

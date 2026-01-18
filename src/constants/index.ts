@@ -44,3 +44,5 @@ export const DEFAULT_PERSONAS = [
   { id: 'dev', name: 'Developer', role: 'Software Engineer', context: 'Prefer technical, code-heavy, and concise responses.' },
   { id: 'creative', name: 'Creative', role: 'Writer', context: 'Use vivid language, metaphors, and elaborated explanations.' }
 ];
+
+export const AZURE_DEFAULT_API_VERSION = '2024-02-15-preview';

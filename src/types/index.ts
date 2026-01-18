@@ -40,3 +40,11 @@ export interface RichHook {
 }
 
 export type SuggestionItem = string | RichHook;
+
+export type NotificationTone = 'info' | 'success' | 'warning' | 'error';
+
+export interface NotificationItem {
+  id: string;
+  message: string;
+  tone: NotificationTone;
+}
